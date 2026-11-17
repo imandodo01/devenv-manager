@@ -27,8 +27,8 @@ The project baseline is Node.js 22.12 or newer. Vitest 5 requires Node.js 22.12 
 
 ## Scope decisions
 
-- The app uses the official Tauri 2 architecture with React, TypeScript, Vite, and a Rust library entry point.
+- The app uses the official Tauri 2 architecture with React, TypeScript, Vite, and Tailwind CSS.
 - Tailwind CSS 4 is integrated through its official Vite plugin.
 - No runtime detection, PATH mutation, repository inspection, or environment-management behavior is included in M0.
-- Tauri bundling is temporarily disabled. Installer format, application icon/branding, signing, and release channel remain open product decisions and are not silently selected by M0.
+- Tauri bundling remains disabled. A provisional development-only Windows icon is included at `src-tauri/icons/icon.ico` because Tauri's Windows resource generation requires an ICO even when installer bundling is disabled. This icon is not final branding; the final cross-platform icon set, installer format, signing, and release channel remain open decisions.
 - The Tauri capability grants only `core:default`; no filesystem, shell, process, or other plugin permissions are introduced.
