@@ -7,14 +7,51 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  color-scheme: dark;
+  background: #020617;
 }
 
 * {
   box-sizing: border-box;
 }
 
-body {
+html,
+body,
+#root {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
+}
+
+body {
+  min-height: 100vh;
+}
+
+button {
+  font: inherit;
+}
+
+@media (max-width: 1024px) {
+  .app-sidebar {
+    width: 5rem;
+    align-items: center;
+    padding-inline: 0.5rem;
+  }
+
+  .app-sidebar > div:first-child {
+    padding-inline: 0;
+  }
+
+  .app-sidebar nav {
+    width: 100%;
+  }
+
+  .app-sidebar nav button {
+    justify-content: center;
+    padding-inline: 0.5rem;
+  }
+
+  .sidebar-copy {
+    display: none;
+  }
 }
