@@ -1,6 +1,6 @@
 # DEM Roadmap
 
-**Status:** Initial planning baseline; revise after repository and technical audit.
+**Status:** Initial planning baseline; M0 accepted on 2026-11-17. M1 development in progress.
 
 | Milestone | Focus | Exit outcome | Dependency |
 |---|---|---|---|
