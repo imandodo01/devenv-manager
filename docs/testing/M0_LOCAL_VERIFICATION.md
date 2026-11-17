@@ -47,7 +47,7 @@ npm run build
 Expected:
 - ESLint exits successfully.
 - TypeScript reports no errors.
-- Vitest reports one passing foundation smoke test.
+- Vitest reports one passing foundation smoke test without the previous config-loader warning.
 - Vite produces the frontend bundle in `dist/`.
 
 ## 5. Rust checks and lockfile
@@ -62,6 +62,8 @@ cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -
 Expected: formatting, test, and Clippy commands exit successfully. The first Cargo dependency resolution creates `src-tauri/Cargo.lock`; commit this lockfile.
 
 ## 6. Run and build the desktop app
+
+A provisional development-only Windows icon is included at `src-tauri/icons/icon.ico` for Tauri's Windows resource generation. It is not final product branding. Installer bundling remains disabled.
 
 ```powershell
 npm run tauri dev
