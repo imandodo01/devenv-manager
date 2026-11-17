@@ -2,6 +2,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import App from "./App";
+import PlaceholderPage from "./pages/PlaceholderPage";
 import {
   getPageDefinition,
   navigationItems,
@@ -15,6 +16,7 @@ describe("application shell", () => {
 
     expect(markup).toContain('data-testid="app-root"');
     expect(markup).toContain('aria-label="Primary navigation"');
+    expect(markup).toContain('aria-current="page"');
     expect(markup).toContain("DevEnv Manager");
     expect(markup).toContain("Workspace summary");
     expect(markup).toContain("Not available yet");
@@ -33,6 +35,20 @@ describe("application shell", () => {
       "requirements",
       "worklist",
     ]);
+  });
+
+  it("renders each future capability as an explicit placeholder", () => {
+    const pages = ["environment", "repositories", "requirements", "worklist"] as const;
+
+    for (const pageId of pages) {
+      const markup = renderToStaticMarkup(
+        createElement(PlaceholderPage, { pageId }),
+      );
+
+      expect(markup).toContain('data-testid="' + pageId + '-placeholder"');
+      expect(markup).toContain("Capability planned");
+      expect(markup).toContain("No local data has been scanned or loaded");
+    }
   });
 
   it("changes the active page through the navigation reducer", () => {
