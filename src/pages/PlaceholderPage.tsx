@@ -1,4 +1,4 @@
-import { getPageDefinition, type PageId } from "../app/navigation";
+import { getPageDefinition, type PageId } from "../app/navigation";\nimport StatusBadge from "../components/StatusBadge";
 
 type PlaceholderPageProps = {
   pageId: Exclude<PageId, "overview">;
