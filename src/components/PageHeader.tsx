@@ -20,9 +20,8 @@ function PageHeader({ pageId }: PageHeaderProps) {
           {page.description}
         </p>
       </div>
-      <div className="inline-flex items-center gap-2 rounded-full border border-slate-700/80 bg-slate-900/70 px-3 py-1.5 text-[11px] font-medium text-slate-400">
-        <span className="size-1.5 rounded-full bg-emerald-400" />
-        Desktop workspace
+      <div className="rounded-full border border-slate-700/80 bg-slate-900/70 px-3 py-1.5 text-[11px] font-medium uppercase tracking-wider text-slate-400">
+        Local application
       </div>
     </header>
   );
