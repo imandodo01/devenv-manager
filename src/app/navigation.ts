@@ -36,7 +36,7 @@ export type PageId = (typeof navigationItems)[number]["id"];
 export const initialPage: PageId = "overview";
 
 export function navigationReducer(currentPage: PageId, nextPage: PageId): PageId {
-  return nextPage;
+  return currentPage === nextPage ? currentPage : nextPage;
 }
 
 export function getPageDefinition(pageId: PageId) {
