@@ -1,20 +1,20 @@
+import SummaryCard from "../components/SummaryCard";
+import StatusBadge from "../components/StatusBadge";
+
 const summaries = [
   {
-    label: "Environment inventory",
-    state: "Not available yet",
-    detail: "Tool and runtime detection is planned for M2.",
+    title: "Environment inventory",
+    description: "Tool and runtime detection is planned for M2.",
     marker: "EN",
   },
   {
-    label: "Repositories",
-    state: "Not available yet",
-    detail: "Repository discovery and registration are planned for a later milestone.",
+    title: "Repositories",
+    description: "Repository discovery and registration are planned for a later milestone.",
     marker: "RE",
   },
   {
-    label: "Requirements",
-    state: "Not available yet",
-    detail: "Project requirement inspection is not implemented yet.",
+    title: "Requirements",
+    description: "Project requirement inspection is not implemented yet.",
     marker: "RQ",
   },
 ];
@@ -60,29 +60,18 @@ function OverviewPage() {
               Capability availability, not a live inventory report.
             </p>
           </div>
-          <span className="rounded-md border border-slate-800 bg-slate-900 px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-slate-500">
-            Initial setup
-          </span>
+          <StatusBadge>Initial setup</StatusBadge>
         </div>
 
         <div className="grid gap-3 xl:grid-cols-3">
           {summaries.map((item) => (
-            <article
-              key={item.label}
-              className="rounded-xl border border-slate-800 bg-slate-900/60 p-5"
-            >
-              <div className="mb-5 flex items-center justify-between">
-                <span className="flex size-9 items-center justify-center rounded-lg border border-slate-800 bg-slate-950 text-[10px] font-semibold text-slate-400">
-                  {item.marker}
-                </span>
-                <span className="rounded-full border border-slate-700/80 bg-slate-950/70 px-2.5 py-1 text-[10px] font-medium text-slate-400">
-                  Planned
-                </span>
-              </div>
-              <h3 className="text-sm font-medium text-slate-200">{item.label}</h3>
-              <p className="mt-2 text-sm font-semibold text-slate-300">{item.state}</p>
-              <p className="mt-2 text-xs leading-5 text-slate-500">{item.detail}</p>
-            </article>
+            <SummaryCard
+              key={item.title}
+              marker={item.marker}
+              title={item.title}
+              status="Planned"
+              description={item.description}
+            />
           ))}
         </div>
       </section>
@@ -95,9 +84,7 @@ function OverviewPage() {
               The next milestone introduces read-only environment inventory and runtime detection.
             </p>
           </div>
-          <span className="rounded-md border border-sky-400/20 bg-sky-400/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-sky-300">
-            M2 · Environment inventory
-          </span>
+          <StatusBadge tone="info">M2 · Environment inventory</StatusBadge>
         </div>
       </section>
     </div>
