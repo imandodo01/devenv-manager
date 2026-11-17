@@ -1,6 +1,36 @@
 # M1 — Local Windows Verification
 
-## Before testing
+## Verification record
+
+**Date:** 2026-11-17  
+**Environment:** User's Windows workstation  
+**Branch:** `feature/m1-application-shell`  
+**Overall result:** Passed
+
+### Automated checks
+
+| Command | Result |
+|---|---|
+| `npm run lint` | Passed |
+| `npm run typecheck` | Passed |
+| `npm test` | Passed — 1 file, 5 tests |
+| `npm run build` | Passed — Vite production build completed |
+
+### Native Windows review
+
+The user confirmed all manual acceptance criteria:
+
+- Native application launched and displayed correctly.
+- Overview was the initial page.
+- Environment, Repositories, Requirements, and Worklist navigation each opened the matching placeholder page.
+- Active navigation state was clear and updated correctly.
+- Overview did not display invented inventory values.
+- Shell remained usable at normal and narrower window sizes.
+- No runtime scan, filesystem access, PATH change, or other machine configuration operation was observed.
+
+## Original verification procedure
+
+The following commands describe the procedure used to prepare the local verification:
 
 ```powershell
 git fetch origin
@@ -11,41 +41,21 @@ node --version
 npm --version
 ```
 
-Expected: clean working tree on `feature/m1-application-shell`, using the repository Node.js/npm baseline.
-
-## Automated checks
+Automated checks:
 
 ```powershell
-npm ci
 npm run lint
 npm run typecheck
 npm test
 npm run build
 ```
 
-Expected: all commands exit successfully; Vitest covers shell rendering and navigation state.
-
-## Native Windows review
+Native application:
 
 ```powershell
 npm run tauri dev
 ```
 
-Verify:
-- Overview is the initial page.
-- Environment, Repositories, Requirements, and Worklist navigation each opens the matching placeholder page.
-- Active navigation state is clear.
-- The Overview does not display invented inventory values.
-- The shell remains usable at the normal window size and when resized narrower.
-- No runtime scan, filesystem access, PATH change, or other machine configuration operation occurs.
+## Evidence and limitations
 
-Close the app normally after review.
-
-## Evidence to report
-
-- Results of each automated command.
-- Confirmation that the native app launched.
-- Navigation and narrow-window review result.
-- Any layout defects or deviations.
-
-Do not include secrets or unrelated workstation details.
+Automated command output was supplied by the user in the conversation. Manual review outcomes are recorded from the user's explicit confirmation that all listed criteria were met. No separate screenshot or video evidence was supplied.
