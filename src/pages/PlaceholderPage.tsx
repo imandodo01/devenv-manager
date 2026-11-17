@@ -1,4 +1,5 @@
-import { getPageDefinition, type PageId } from "../app/navigation";\nimport StatusBadge from "../components/StatusBadge";
+import { getPageDefinition, type PageId } from "../app/navigation";
+import StatusBadge from "../components/StatusBadge";
 
 type PlaceholderPageProps = {
   pageId: Exclude<PageId, "overview">;
@@ -22,9 +23,9 @@ function PlaceholderPage({ pageId }: PlaceholderPageProps) {
       <div className="flex size-11 items-center justify-center rounded-xl border border-slate-700 bg-slate-950 text-xs font-semibold tracking-wide text-slate-400">
         {page.shortLabel}
       </div>
-      <p className="mt-6 text-[10px] font-semibold uppercase tracking-[0.2em] text-sky-400/80">
-        Capability planned
-      </p>
+      <div className="mt-6">
+        <StatusBadge tone="info">Capability planned</StatusBadge>
+      </div>
       <h2 className="mt-2 text-xl font-semibold tracking-tight text-slate-100">
         {page.label}
       </h2>
