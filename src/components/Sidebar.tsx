@@ -33,7 +33,8 @@ function Sidebar({ activePage, onNavigate }: SidebarProps) {
             <button
               key={item.id}
               type="button"
-              aria-current={isActive ? "page" : undefined}\n              aria-label={item.label}
+              aria-current={isActive ? "page" : undefined}
+              aria-label={item.label}
               className={`group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 ${
                 isActive
                   ? "bg-sky-400/10 text-sky-200"
