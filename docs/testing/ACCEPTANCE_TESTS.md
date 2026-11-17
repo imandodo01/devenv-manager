@@ -1,6 +1,6 @@
 # Acceptance Test Register
 
-This register describes expected behavior; it is not evidence that features exist. Add concrete data, edge cases, commands, and evidence per ticket.
+This register describes expected behavior and records acceptance outcomes. Add concrete data, edge cases, commands, and evidence per ticket.
 
 | ID | Area | Acceptance expectation | Verification | Status |
 |---|---|---|---|---|
@@ -15,4 +15,5 @@ This register describes expected behavior; it is not evidence that features exis
 | AT-009 | Inspector | Metadata parsed safely; requirement cites source file | Unit + integration | Not Prepared |
 | AT-010 | Compatibility | Satisfied, missing, incompatible, and unknown states distinguished | Unit + integration | Not Prepared |
 | AT-011 | Repository | Existing, Planned, Pending Setup, Archived remain distinguishable and user-controlled | UI + integration | Not Prepared |
-| AT-012 | M1 | Application shell, primary navigation, honest placeholder states, and responsive layout work | Automated + Windows manual | Ready |
+| AT-012 | M1 | Application shell, primary navigation, honest placeholder states, and responsive layout work | Automated + Windows manual | Passed — 2026-11-17 |
+
