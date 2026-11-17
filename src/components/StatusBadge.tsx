@@ -1,5 +1,7 @@
+import type { ReactNode } from "react";
+
 type StatusBadgeProps = {
-  children: React.ReactNode;
+  children: ReactNode;
   tone?: "muted" | "info";
 };
 
