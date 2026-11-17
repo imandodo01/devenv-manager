@@ -14,4 +14,5 @@ This register describes expected behavior; it is not evidence that features exis
 | AT-008 | Switching | Result verified; failure reported without trusting exit code alone | Automated + Windows | Not Prepared |
 | AT-009 | Inspector | Metadata parsed safely; requirement cites source file | Unit + integration | Not Prepared |
 | AT-010 | Compatibility | Satisfied, missing, incompatible, and unknown states distinguished | Unit + integration | Not Prepared |
-| AT-011 | Repository | Existing, Planned, Pending Setup, Archived remain distinguishable and user-controlled | UI + integration | Not Prepared |\n| AT-012 | M1 | Application shell, primary navigation, honest placeholder states, and responsive layout work | Automated + Windows manual | Preparing |
+| AT-011 | Repository | Existing, Planned, Pending Setup, Archived remain distinguishable and user-controlled | UI + integration | Not Prepared |
+| AT-012 | M1 | Application shell, primary navigation, honest placeholder states, and responsive layout work | Automated + Windows manual | Ready |
