@@ -158,7 +158,13 @@ function EnvironmentPage() {
       );
       setSnapshot(result);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Unknown command error.");
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : typeof cause === "string"
+            ? cause
+            : "Unknown command error.",
+      );
     } finally {
       setLoading(false);
     }
