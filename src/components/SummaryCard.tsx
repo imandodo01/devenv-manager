@@ -17,7 +17,9 @@ function SummaryCard({ marker, title, status, description }: SummaryCardProps) {
         <StatusBadge>{status}</StatusBadge>
       </div>
       <h3 className="text-sm font-medium text-slate-200">{title}</h3>
-      <p className="mt-2 text-sm font-semibold text-slate-300">Not available yet</p>
+      <p className="mt-2 text-sm font-semibold text-slate-300">
+        {status === "Available" ? "Ready to use" : "Not available yet"}
+      </p>
       <p className="mt-2 text-xs leading-5 text-slate-500">{description}</p>
     </article>
   );
