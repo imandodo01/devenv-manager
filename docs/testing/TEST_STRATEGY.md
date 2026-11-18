@@ -14,6 +14,6 @@ For each PR, list exact commands, outcomes, environment, and checks not run. Dis
 
 ## M2 environment inventory
 
-- Rust unit tests cover tool-specific version parsing, malformed/unrelated output, executable-name validation, canonical-path deduplication and ordering, missing candidates versus inaccessible configured roots, version-manager root scanning, result-state mapping, bounded output retention, process start failure, non-zero exit, and timeout termination.
-- Frontend presentation tests cover detected, not-found, ambiguous, inspection-error, loading, and command-error states.
+- Rust unit tests cover tool-specific version parsing, malformed/unrelated output, executable-name validation, canonical-path deduplication and ordering, missing candidates versus inaccessible configured roots, source-specific configured-root diagnostics, version-manager root scanning, Windows extended-length path normalization for Composer PHAR arguments, result-state mapping, bounded output retention, process start failure, non-zero exit, and timeout termination.
+- Frontend presentation tests cover detected, not-found, ambiguous, inspection-error, loading, and command-error states; Overview tests ensure implemented M2 capability status and the next milestone remain synchronized.
 - Windows local verification remains mandatory for real PATH and installation discovery; remote/static review cannot establish the user's installed tool inventory.
