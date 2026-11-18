@@ -5,10 +5,19 @@
 
 ## 1. Prepare
 
-From the repository root:
+From the repository root, first confirm there are no unrelated working-tree changes. Then fetch and check out the PR branch:
 
 ```powershell
 git status --short --branch
+git fetch origin
+git switch --track origin/feature/m2-environment-inventory-implementation
+```
+
+If the local branch already exists, use `git switch feature/m2-environment-inventory-implementation` followed by `git pull --ff-only origin feature/m2-environment-inventory-implementation`.
+
+Then activate the project's Node version and record the toolchain:
+
+```powershell
 nodeuse 22
 node --version
 npm --version
@@ -53,7 +62,7 @@ Run the matching fixed version command for each installed executable. For Compos
 php.exe <path-to-composer.phar> --no-plugins --no-scripts --version
 ```
 
-Do not paste full PATH or unrelated environment-variable values into evidence.
+For custom installations not listed by `Get-Command`, compare the exact executable path shown in DEM directly. Do not paste full PATH or unrelated environment-variable values into evidence.
 
 ## 5. Verify result states
 
