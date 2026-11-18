@@ -962,10 +962,8 @@ mod tests {
 
     #[test]
     fn discovery_deduplicates_canonical_candidate_paths() {
-        let directory = std::env::temp_dir().join(format!(
-            "dem-m2-candidate-test-{}",
-            std::process::id()
-        ));
+        let directory =
+            std::env::temp_dir().join(format!("dem-m2-candidate-test-{}", std::process::id()));
         fs::create_dir_all(&directory).expect("create test directory");
         let executable = directory.join("node.exe");
         fs::write(&executable, b"test fixture").expect("create fixture");
@@ -974,7 +972,10 @@ mod tests {
         discovery.add(ToolId::Node, executable.clone(), None);
         discovery.add(ToolId::Node, executable.clone(), None);
 
-        assert_eq!(discovery.candidates.get(&ToolId::Node).map(Vec::len), Some(1));
+        assert_eq!(
+            discovery.candidates.get(&ToolId::Node).map(Vec::len),
+            Some(1)
+        );
         let _ = fs::remove_file(executable);
         let _ = fs::remove_dir(directory);
     }
