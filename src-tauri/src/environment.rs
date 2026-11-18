@@ -449,11 +449,16 @@ fn inspect_tool(tool: ToolId, discovery: &Discovery, php_count: usize, php_path:
         } else {
             "Composer PHAR was found, but PHP detection is ambiguous; no PHP runner was selected.".to_string()
         });
+        let installations = candidates.iter().map(|candidate| Installation {
+            executable_path: php_path.map(|path| path.to_string_lossy().into_owned()).unwrap_or_default(),
+            artifact_path: Some(candidate.artifact.as_ref().unwrap_or(&candidate.executable).to_string_lossy().into_owned()),
+            version: None,
+        }).collect();
         return ToolResult {
             tool,
             label: tool.label(),
-            status: "inspectionError",
-            installations: Vec::new(),
+            status: if candidates.len() > 1 { "ambiguous" } else { "inspectionError" },
+            installations,
             incomplete: true,
             notes,
         };
