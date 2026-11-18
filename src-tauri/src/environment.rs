@@ -211,10 +211,7 @@ fn add_manager_root(
         Ok(entries) => entries,
         Err(error) if error.kind() == ErrorKind::NotFound => return,
         Err(_) => {
-            discovery.note(
-                tool,
-                format!("Could not inspect configured directory: {}", root.display()),
-            );
+            discovery.note(tool, "Could not inspect a configured tool directory.");
             return;
         }
     };
