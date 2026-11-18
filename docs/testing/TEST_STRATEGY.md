@@ -11,3 +11,9 @@ Derive tests from acceptance criteria and risk. Test pure logic without Windows 
 6. User acceptance: criteria checked with evidence.
 
 For each PR, list exact commands, outcomes, environment, and checks not run. Distinguish agent-run automated checks from user-run Windows checks. A successful build alone is not complete verification.
+
+## M2 environment inventory
+
+- Rust unit tests cover supported version output parsing, unrecognized output, executable-name validation, and bounded output retention.
+- Frontend presentation tests cover detected, not-found, ambiguous, inspection-error, loading, and command-error states.
+- Windows local verification remains mandatory for real PATH and installation discovery; remote/static review cannot establish the user's installed tool inventory.
