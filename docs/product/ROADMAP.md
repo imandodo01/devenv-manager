@@ -14,6 +14,8 @@
 
 ## Parallel preparation and test queue
 
+Parallel workstream planning for M2–M6 is documented in [WORKSTREAM_PLAN_M2_M6.md](../development/WORKSTREAM_PLAN_M2_M6.md).
+
 While a milestone is implemented or locally tested, prepare subsequent technical investigations, acceptance criteria, automated test design, and manual Windows verification. Do not implement dependent features against unstable/unapproved interfaces. Keep PRs independently reviewable.
 
 ## Track three statuses independently
@@ -26,4 +28,4 @@ Development completion does not imply acceptance. Milestone acceptance requires 
 
 ## Estimates
 
-Earlier estimates (M0 3–5h; feature work roughly 26–38h) are rough planning references, not commitments. Revise after technical audit and ticket decomposition.
+Earlier estimates (M0 3–5h; feature work roughly 26–38h) are rough planning references, not commitments. The current M2–M6 planning estimate is 22–32h; revise after the M2 technical audit and scope decisions.
