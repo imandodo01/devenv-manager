@@ -184,9 +184,7 @@ fn normalize_windows_process_path(value: &str) -> String {
 fn process_path_argument(path: &Path) -> OsString {
     #[cfg(windows)]
     {
-        OsString::from(normalize_windows_process_path(
-            &path.to_string_lossy(),
-        ))
+        OsString::from(normalize_windows_process_path(&path.to_string_lossy()))
     }
     #[cfg(not(windows))]
     {
@@ -334,7 +332,10 @@ fn add_configured_root(
             format!("Configured {source} path is not a directory."),
         ),
         Err(error) if error.kind() == ErrorKind::NotFound => {
-            discovery.note(tool, format!("Configured {source} directory does not exist."));
+            discovery.note(
+                tool,
+                format!("Configured {source} directory does not exist."),
+            );
         }
         Err(_) => discovery.note(tool, format!("Could not inspect configured {source}.")),
     }
@@ -354,11 +355,29 @@ fn discover() -> Discovery {
         add_configured_root(&mut result, ToolId::Php, "PHP_HOME", &root, false);
     }
     if let Some(root) = env_path("JAVA_HOME") {
-        add_configured_root(&mut result, ToolId::Java, "JAVA_HOME", &root.join("bin"), false);
+        add_configured_root(
+            &mut result,
+            ToolId::Java,
+            "JAVA_HOME",
+            &root.join("bin"),
+            false,
+        );
     }
     if let Some(root) = env_path("CARGO_HOME") {
-        add_configured_root(&mut result, ToolId::Rustc, "CARGO_HOME", &root.join("bin"), false);
-        add_configured_root(&mut result, ToolId::Cargo, "CARGO_HOME", &root.join("bin"), false);
+        add_configured_root(
+            &mut result,
+            ToolId::Rustc,
+            "CARGO_HOME",
+            &root.join("bin"),
+            false,
+        );
+        add_configured_root(
+            &mut result,
+            ToolId::Cargo,
+            "CARGO_HOME",
+            &root.join("bin"),
+            false,
+        );
     }
     if let Some(root) = env_path("USERPROFILE").map(|path| path.join(".cargo").join("bin")) {
         add_manager_root(&mut result, ToolId::Rustc, &root, false);
