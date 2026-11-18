@@ -33,11 +33,11 @@ This policy was reviewed and approved on 2026-11-18. Detection remains intention
    - Node.js: `NVM_HOME` and `NVM_SYMLINK`.
    - PHP: `PHP_HOME`.
    - Java: `JAVA_HOME`.
-   - Rust: `CARGO_HOME` and ``%USERPROFILE%\\.cargo``.
+   - Rust: `CARGO_HOME` and `%USERPROFILE%\\.cargo`.
 3. Inspect a small set of conventional Windows locations:
-   - ``%ProgramFiles%\\nodejs``, ``%ProgramFiles%\\PHP``, ``%ProgramFiles%\\Git``.
-   - Direct child JDK directories under ``%ProgramFiles%\\Java``.
-   - ``%ProgramData%\\ComposerSetup\\bin\\composer.phar``.
+   - `%ProgramFiles%\\nodejs`, `%ProgramFiles%\\PHP`, `%ProgramFiles%\\Git`.
+   - Direct child JDK directories under `%ProgramFiles%\\Java`.
+   - `%ProgramData%\\ComposerSetup\\bin\\composer.phar`.
 4. For version-manager roots that contain version directories, inspect direct child directories only. Do not recurse into arbitrary subdirectories.
 5. Composer is discovered as a PHAR file. Read and execute it only through one unambiguous validated `php.exe` candidate with fixed arguments. Never execute `.bat` or `.cmd` wrappers.
 6. Do not inspect the Windows registry, scan whole drives, query network catalogs, or transmit local inventory.
