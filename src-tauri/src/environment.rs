@@ -4,7 +4,7 @@ use std::{
     env,
     ffi::OsString,
     fs,
-    io::{Read, ErrorKind},
+    io::{ErrorKind, Read},
     path::{Path, PathBuf},
     process::{Command, Stdio},
     thread,
@@ -117,7 +117,10 @@ impl Discovery {
             Ok(path) => path,
             Err(error) if error.kind() == ErrorKind::NotFound => return,
             Err(_) => {
-                self.note(tool, "A candidate executable path could not be accessed or canonicalized.");
+                self.note(
+                    tool,
+                    "A candidate executable path could not be accessed or canonicalized.",
+                );
                 return;
             }
         };
@@ -139,7 +142,10 @@ impl Discovery {
         let at_limit = self.candidates.get(&tool)
             .is_some_and(|candidates| candidates.len() >= MAX_CANDIDATES_PER_TOOL);
         if at_limit {
-            self.note(tool, "Candidate limit reached; additional installations were not inspected.");
+            self.note(
+                tool,
+                "Candidate limit reached; additional installations were not inspected.",
+            );
             return;
         }
         self.candidates.entry(tool).or_default().push(Candidate {
@@ -169,7 +175,9 @@ fn add_path_candidates(discovery: &mut Discovery) {
         if !directory.is_dir() {
             continue;
         }
-        for tool in [ToolId::Node, ToolId::Php, ToolId::Java, ToolId::Rustc, ToolId::Cargo, ToolId::Git] {
+        for tool in [
+            ToolId::Node, ToolId::Php, ToolId::Java, ToolId::Rustc, ToolId::Cargo, ToolId::Git,
+        ] {
             discovery.add(tool, directory.join(tool.executable_name()), None);
         }
         let composer = directory.join("composer.phar");
@@ -178,7 +186,10 @@ fn add_path_candidates(discovery: &mut Discovery) {
         }
     }
     if path_entries.len() > MAX_PATH_ENTRIES {
-        for tool in [ToolId::Node, ToolId::Php, ToolId::Java, ToolId::Rustc, ToolId::Cargo, ToolId::Git, ToolId::Composer] {
+        for tool in [
+            ToolId::Node, ToolId::Php, ToolId::Java, ToolId::Rustc, ToolId::Cargo, ToolId::Git,
+            ToolId::Composer,
+        ] {
             discovery.note(tool, "PATH entry limit reached; remaining entries were not inspected.");
         }
     }
@@ -200,7 +211,10 @@ fn add_manager_root(
         Ok(entries) => entries,
         Err(error) if error.kind() == ErrorKind::NotFound => return,
         Err(_) => {
-            discovery.note(tool, format!("Could not inspect configured directory: {}", root.display()));
+            discovery.note(
+                tool,
+                format!("Could not inspect configured directory: {}", root.display()),
+            );
             return;
         }
     };
@@ -220,7 +234,10 @@ fn add_manager_root(
         }
     }
     if entries.len() > MAX_CHILD_DIRECTORIES {
-        discovery.note(tool, "Version-manager directory limit reached; remaining entries were not inspected.");
+        discovery.note(
+            tool,
+            "Version-manager directory limit reached; remaining entries were not inspected.",
+        );
     }
 }
 
@@ -261,7 +278,12 @@ fn discover() -> Discovery {
                 for entry in entries.iter().take(MAX_CHILD_DIRECTORIES) {
                     if let Ok(entry) = entry {
                         if entry.file_type().is_ok_and(|kind| kind.is_dir()) {
-                            add_manager_root(&mut result, ToolId::Java, &entry.path().join("bin"), false);
+                            add_manager_root(
+                                &mut result,
+                                ToolId::Java,
+                                &entry.path().join("bin"),
+                                false,
+                            );
                         }
                     }
                 }
@@ -270,7 +292,10 @@ fn discover() -> Discovery {
                 }
             }
             Err(error) if error.kind() == ErrorKind::NotFound => {}
-            Err(_) => result.note(ToolId::Java, "Could not inspect the conventional Java installation directory."),
+            Err(_) => result.note(
+                ToolId::Java,
+                "Could not inspect the conventional Java installation directory.",
+            ),
         }
     }
 
@@ -387,9 +412,15 @@ fn parse_version(tool: ToolId, output: &str) -> Option<String> {
     None
 }
 
-fn inspect_candidate(tool: ToolId, candidate: &Candidate, php_runner: Option<&Path>) -> Result<Installation, String> {
+fn inspect_candidate(
+    tool: ToolId,
+    candidate: &Candidate,
+    php_runner: Option<&Path>,
+) -> Result<Installation, String> {
     let (program, args): (PathBuf, Vec<OsString>) = if tool == ToolId::Composer {
-        let php = php_runner.ok_or_else(|| "Composer requires exactly one validated PHP installation.".to_string())?;
+        let php = php_runner.ok_or_else(|| {
+            "Composer requires exactly one validated PHP installation.".to_string()
+        })?;
         let artifact = candidate.artifact.as_ref().unwrap_or(&candidate.executable);
         (php.to_path_buf(), vec![
             artifact.as_os_str().to_owned(),
@@ -425,7 +456,14 @@ fn inspect_candidate(tool: ToolId, candidate: &Candidate, php_runner: Option<&Pa
             candidate.executable.to_string_lossy().into_owned()
         },
         artifact_path: if tool == ToolId::Composer {
-            Some(candidate.artifact.as_ref().unwrap_or(&candidate.executable).to_string_lossy().into_owned())
+            Some(
+                candidate
+                    .artifact
+                    .as_ref()
+                    .unwrap_or(&candidate.executable)
+                    .to_string_lossy()
+                    .into_owned(),
+            )
         } else {
             candidate.artifact.as_ref().map(|path| path.to_string_lossy().into_owned())
         },
@@ -433,7 +471,12 @@ fn inspect_candidate(tool: ToolId, candidate: &Candidate, php_runner: Option<&Pa
     })
 }
 
-fn inspect_tool(tool: ToolId, discovery: &Discovery, php_count: usize, php_path: Option<&Path>) -> ToolResult {
+fn inspect_tool(
+    tool: ToolId,
+    discovery: &Discovery,
+    php_count: usize,
+    php_path: Option<&Path>,
+) -> ToolResult {
     let candidates = discovery.candidates.get(&tool).cloned().unwrap_or_default();
     let mut notes = discovery.notes.get(&tool).cloned().unwrap_or_default();
     let incomplete = !notes.is_empty();
@@ -453,11 +496,21 @@ fn inspect_tool(tool: ToolId, discovery: &Discovery, php_count: usize, php_path:
         notes.push(if php_count == 0 {
             "Composer PHAR was found, but no validated PHP installation is available.".to_string()
         } else {
-            "Composer PHAR was found, but PHP detection is ambiguous; no PHP runner was selected.".to_string()
+            "Composer PHAR was found, but PHP detection is ambiguous; no PHP runner was selected."
+                .to_string()
         });
         let installations = candidates.iter().map(|candidate| Installation {
-            executable_path: php_path.map(|path| path.to_string_lossy().into_owned()).unwrap_or_default(),
-            artifact_path: Some(candidate.artifact.as_ref().unwrap_or(&candidate.executable).to_string_lossy().into_owned()),
+            executable_path: php_path
+                .map(|path| path.to_string_lossy().into_owned())
+                .unwrap_or_default(),
+            artifact_path: Some(
+                candidate
+                    .artifact
+                    .as_ref()
+                    .unwrap_or(&candidate.executable)
+                    .to_string_lossy()
+                    .into_owned(),
+            ),
             version: None,
         }).collect();
         return ToolResult {
@@ -485,7 +538,14 @@ fn inspect_tool(tool: ToolId, discovery: &Discovery, php_count: usize, php_path:
                         candidate.executable.to_string_lossy().into_owned()
                     },
                     artifact_path: if tool == ToolId::Composer {
-                        Some(candidate.artifact.as_ref().unwrap_or(&candidate.executable).to_string_lossy().into_owned())
+                        Some(
+                            candidate
+                                .artifact
+                                .as_ref()
+                                .unwrap_or(&candidate.executable)
+                                .to_string_lossy()
+                                .into_owned(),
+                        )
                     } else {
                         None
                     },
@@ -548,8 +608,14 @@ mod tests {
     fn parses_supported_version_output_without_guessing() {
         assert_eq!(parse_version(ToolId::Node, "v22.23.4"), Some("22.23.4".into()));
         assert_eq!(parse_version(ToolId::Php, "PHP 8.3.14 (cli)"), Some("8.3.14".into()));
-        assert_eq!(parse_version(ToolId::Git, "git version 2.45.1.windows.1"), Some("2.45.1.windows.1".into()));
-        assert_eq!(parse_version(ToolId::Java, "openjdk version \"21.0.2\" 2024-01-16"), Some("21.0.2".into()));
+        assert_eq!(
+            parse_version(ToolId::Git, "git version 2.45.1.windows.1"),
+            Some("2.45.1.windows.1".into())
+        );
+        assert_eq!(
+            parse_version(ToolId::Java, "openjdk version \"21.0.2\" 2024-01-16"),
+            Some("21.0.2".into())
+        );
     }
 
     #[test]
