@@ -170,13 +170,40 @@ fn env_path(name: &str) -> Option<PathBuf> {
 
 fn add_path_candidates(discovery: &mut Discovery) {
     let Some(path_value) = env::var_os("PATH") else {
+        for tool in [
+            ToolId::Node,
+            ToolId::Php,
+            ToolId::Java,
+            ToolId::Rustc,
+            ToolId::Cargo,
+            ToolId::Git,
+            ToolId::Composer,
+        ] {
+            discovery.note(tool, "The current process PATH is unavailable.");
+        }
         return;
     };
 
     let path_entries: Vec<_> = env::split_paths(&path_value).take(MAX_PATH_ENTRIES + 1).collect();
     for directory in path_entries.iter().take(MAX_PATH_ENTRIES) {
-        if !directory.is_dir() {
-            continue;
+        match fs::metadata(directory) {
+            Ok(metadata) if metadata.is_dir() => {}
+            Ok(_) => continue,
+            Err(error) if error.kind() == ErrorKind::NotFound => continue,
+            Err(_) => {
+                for tool in [
+                    ToolId::Node,
+                    ToolId::Php,
+                    ToolId::Java,
+                    ToolId::Rustc,
+                    ToolId::Cargo,
+                    ToolId::Git,
+                    ToolId::Composer,
+                ] {
+                    discovery.note(tool, "A current PATH directory could not be inspected.");
+                }
+                continue;
+            }
         }
         for tool in [
             ToolId::Node, ToolId::Php, ToolId::Java, ToolId::Rustc, ToolId::Cargo, ToolId::Git,
@@ -276,15 +303,22 @@ fn discover() -> Discovery {
             Ok(entries) => {
                 let entries: Vec<_> = entries.take(MAX_CHILD_DIRECTORIES + 1).collect();
                 for entry in entries.iter().take(MAX_CHILD_DIRECTORIES) {
-                    if let Ok(entry) = entry {
-                        if entry.file_type().is_ok_and(|kind| kind.is_dir()) {
-                            add_manager_root(
-                                &mut result,
-                                ToolId::Java,
-                                &entry.path().join("bin"),
-                                false,
-                            );
-                        }
+                    let Ok(entry) = entry else {
+                        result.note(ToolId::Java, "A Java installation directory entry could not be read.");
+                        continue;
+                    };
+                    match entry.file_type() {
+                        Ok(kind) if kind.is_dir() => add_manager_root(
+                            &mut result,
+                            ToolId::Java,
+                            &entry.path().join("bin"),
+                            false,
+                        ),
+                        Ok(_) => {}
+                        Err(_) => result.note(
+                            ToolId::Java,
+                            "A Java installation directory entry could not be inspected.",
+                        ),
                     }
                 }
                 if entries.len() > MAX_CHILD_DIRECTORIES {
