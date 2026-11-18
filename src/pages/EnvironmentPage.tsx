@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import StatusBadge from "../components/StatusBadge";
 import {
@@ -147,6 +147,7 @@ function EnvironmentPage() {
   const [snapshot, setSnapshot] = useState<EnvironmentInventorySnapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const initialScanStarted = useRef(false);
 
   const scan = useCallback(async () => {
     setLoading(true);
@@ -164,6 +165,10 @@ function EnvironmentPage() {
   }, []);
 
   useEffect(() => {
+    if (initialScanStarted.current) {
+      return;
+    }
+    initialScanStarted.current = true;
     void scan();
   }, [scan]);
 
