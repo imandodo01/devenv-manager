@@ -573,6 +573,44 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
+    fn timeout_child_helper() {
+        thread::sleep(Duration::from_secs(10));
+    }
+
+    #[test]
+    #[ignore]
+    fn nonzero_exit_child_helper() {
+        std::process::exit(7);
+    }
+
+    #[test]
+    fn timed_out_version_process_is_killed() {
+        let executable = std::env::current_exe().expect("current test executable");
+        let arguments = [
+            OsString::from("--exact"),
+            OsString::from("environment::tests::timeout_child_helper"),
+            OsString::from("--ignored"),
+            OsString::from("--nocapture"),
+        ];
+        let output = run_bounded(&executable, &arguments).expect("start test helper");
+        assert!(output.timed_out);
+    }
+
+    #[test]
+    fn nonzero_process_exit_is_preserved() {
+        let executable = std::env::current_exe().expect("current test executable");
+        let arguments = [
+            OsString::from("--exact"),
+            OsString::from("environment::tests::nonzero_exit_child_helper"),
+            OsString::from("--ignored"),
+            OsString::from("--nocapture"),
+        ];
+        let output = run_bounded(&executable, &arguments).expect("start test helper");
+        assert_eq!(output.exit_code, Some(7));
+    }
+
+    #[test]
     fn discovery_deduplicates_canonical_candidate_paths() {
         let directory = std::env::temp_dir().join(format!(
             "dem-m2-candidate-test-{}",
