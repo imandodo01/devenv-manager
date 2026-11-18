@@ -1,13 +1,13 @@
 # DEM Roadmap
 
-**Status:** M0 and M1 accepted on 2026-11-17. M2 implementation is in progress; acceptance remains pending.
+**Status (2026-11-19):** M0 and M1 accepted. M2 is merged to `main` and locally verified; final read-only environment comparison and explicit acceptance remain pending. M3 is next.
 
 | Milestone | Focus | Exit outcome | Dependency |
 |---|---|---|---|
 | M0 | Foundation Setup | Tauri app runs/builds locally; React and Rust integrated; npm/Cargo checks available | User prepares/verifies |
 | M1 | Application Shell | Layout, navigation, dashboard, reusable UI foundation | M0 — Accepted |
-| M2 | Environment Inventory & Runtime Detection | Supported tools/runtimes shown with versions and locations | M0; M1 UI contracts |
-| M3 | Runtime Information & Version Management | Runtime metadata and available-version information | M2 detection model |
+| M2 | Environment Inventory & Runtime Detection | Supported tools/runtimes shown with versions and locations | M0; M1 UI contracts — Implemented and merged; Windows verification partial; acceptance pending |
+| M3 | Runtime Information & Version Management | Runtime metadata and installed-version information | M2 detection model — Next |
 | M4 | Runtime Switching | Controlled global selection, permissions, verification, traceability | M2/M3; safety design |
 | M5 | Dependency & Configuration Inspector | Repository requirements compared with local capabilities | Inventory and repository model |
 | M6 | Integration & UX Refinement | Integrated behavior, errors, docs, final acceptance | M1–M5 as applicable |
