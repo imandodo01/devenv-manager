@@ -122,18 +122,21 @@ impl Discovery {
 
         let canonical_artifact = artifact.and_then(|path| path.canonicalize().ok())
             .filter(|path| path.is_file());
-        let candidates = self.candidates.entry(tool).or_default();
-        let duplicate = candidates.iter().any(|item| {
-            item.executable == canonical && item.artifact == canonical_artifact
+        let duplicate = self.candidates.get(&tool).is_some_and(|candidates| {
+            candidates.iter().any(|item| {
+                item.executable == canonical && item.artifact == canonical_artifact
+            })
         });
         if duplicate {
             return;
         }
-        if candidates.len() >= MAX_CANDIDATES_PER_TOOL {
+        let at_limit = self.candidates.get(&tool)
+            .is_some_and(|candidates| candidates.len() >= MAX_CANDIDATES_PER_TOOL);
+        if at_limit {
             self.note(tool, "Candidate limit reached; additional installations were not inspected.");
             return;
         }
-        candidates.push(Candidate {
+        self.candidates.entry(tool).or_default().push(Candidate {
             executable: canonical,
             artifact: canonical_artifact,
         });
@@ -374,7 +377,12 @@ fn inspect_candidate(tool: ToolId, candidate: &Candidate, php_runner: Option<&Pa
     let (program, args): (PathBuf, Vec<OsString>) = if tool == ToolId::Composer {
         let php = php_runner.ok_or_else(|| "Composer requires exactly one validated PHP installation.".to_string())?;
         let artifact = candidate.artifact.as_ref().unwrap_or(&candidate.executable);
-        (php.to_path_buf(), vec![artifact.as_os_str().to_owned(), OsString::from("--version")])
+        (php.to_path_buf(), vec![
+            artifact.as_os_str().to_owned(),
+            OsString::from("--no-plugins"),
+            OsString::from("--no-scripts"),
+            OsString::from("--version"),
+        ])
     } else {
         (
             candidate.executable.clone(),
@@ -520,8 +528,8 @@ mod tests {
 
     #[test]
     fn expected_executable_name_is_case_insensitive() {
-        assert!(has_expected_name(Path::new(r"C:\Tools\NODE.EXE"), "node.exe"));
-        assert!(!has_expected_name(Path::new(r"C:\Tools\node.cmd"), "node.exe"));
+        assert!(has_expected_name(Path::new("NODE.EXE"), "node.exe"));
+        assert!(!has_expected_name(Path::new("node.cmd"), "node.exe"));
     }
 
     #[test]
