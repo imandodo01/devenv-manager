@@ -5,14 +5,15 @@
 **Base:** `main` after M1 acceptance and the M2 planning decision in PR #5  
 **Purpose:** Enable useful parallel preparation and implementation without allowing unstable contracts or Windows-only verification to become integration risks.
 
-## 1. Current baseline
+## 1. Current baseline (updated 2026-11-19)
 
 - M0 Foundation Setup — accepted.
 - M1 Application Shell — accepted.
-- M2–M6 — not yet implemented/accepted.
-- The application currently has a frontend shell and placeholder pages. The Rust Tauri entry point has no application commands registered yet.
-- The default Tauri capability currently grants only `core:default`; any filesystem/process permissions or plugins must be justified and reviewed before introduction.
-- Product Specification and ADRs explicitly leave runtime support, detection strategy, repository discovery, environment scopes, and version provisioning open.
+- M2 Environment Inventory — implemented and merged to `main` via PR #12 (`f2d53e2`); user Windows automated checks and visual application verification passed. Final PATH before/after evidence and explicit acceptance remain pending.
+- M3–M6 — not implemented; M3 is next.
+- The native application now has a read-only Tauri inventory command and live Environment page. The M2 detection contract is the foundation for M3; do not duplicate discovery logic.
+- The default Tauri capability remains narrow (`core:default`); any filesystem/process permissions or plugins must be justified and reviewed before introduction.
+- Product Specification and ADRs still leave repository discovery, environment scopes, and version provisioning open.
 
 This plan does not convert open product questions into approved requirements.
 
@@ -192,7 +193,28 @@ Any change to a shared public type must be proposed in its owning issue/PR and c
 - Development, Test Preparation, and Acceptance are tracked independently.
 - Keep PRs focused; do not bundle all milestones into one branch.
 
-## 9. Next work session — office laptop
+## 9. Next work session — M3 planning and implementation
+
+1. Start from a clean, synchronized `main`.
+2. Review M2's Rust/TypeScript contract and issue #6; M3 must consume the existing contract rather than add a second discovery mechanism.
+3. Decide the M3 metadata/provenance schema and installed-version grouping rules.
+4. Keep external version catalogs out of scope unless a trusted provider and freshness policy are explicitly accepted.
+5. Add version normalization/comparison only for the approved supported formats.
+6. Add tests, UI states, and a Windows verification guide; no PATH/environment changes or runtime installation.
+7. In a separate short M2 closeout step, record Process/User/Machine PATH equality and explicit acceptance if desired.
+
+### Remaining effort forecast (planning, not a deadline)
+
+- M2 final read-only evidence/acceptance: 0.25–0.5 focused hours.
+- M3: 4–6 focused hours (issue #6 baseline).
+- M4: 6–8 focused hours (issue #7 baseline; safety ADR must be approved before implementation).
+- M5: 4–6 focused hours after repository-input and metadata-scope decisions (issue #8 baseline; repository inventory may require separate scope/estimate).
+- M6: 3–5 focused hours (issue #9 baseline).
+- **Current remaining baseline: approximately 17.25–25.5 focused hours**, excluding any separately scoped Repository Inventory work, substantial defects found in Windows verification, or release packaging/signing.
+- Confidence: Medium-low. M3–M6 estimates are ticket baselines; M5 has unresolved input-scope risk and M4 has Windows permission/rollback risk.
+- At an assumed 2–3 focused hours per working session, this is roughly 6–13 sessions. Calendar duration depends on available evenings/weekends and review/verification gaps; this is not a delivery date.
+
+## 10. Previous next-session checklist (historical)
 
 1. Confirm local repository is on a clean working tree before switching branches.
 2. Synchronize M1-accepted `main`:
