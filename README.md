@@ -2,7 +2,7 @@
 
 Windows desktop developer-environment information and management center.
 
-**Current milestone:** M0 — Foundation Setup. Product capabilities are not implemented yet.
+**Current milestone:** M3 — Runtime Information & Installed-Version Inventory. M0 and M1 are accepted; M2 is merged and locally verified with final read-only acceptance checks pending.
 
 ## Technology
 
@@ -79,6 +79,7 @@ M0 establishes the application foundation only. Runtime detection, PATH changes,
 - [Product specification](docs/product/PRODUCT_SPECIFICATION.md)
 - [Scope](docs/product/SCOPE.md)
 - [Roadmap](docs/product/ROADMAP.md)
+- [Current project status and continuation handoff](docs/development/PROJECT_STATUS.md)
 - [Architecture overview](docs/architecture/SYSTEM_OVERVIEW.md)
 - [Architecture decisions](docs/architecture/ARCHITECTURE_DECISIONS.md)
 - [Development workflow](docs/development/DEVELOPMENT_WORKFLOW.md)
