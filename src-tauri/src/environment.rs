@@ -1,6 +1,6 @@
 use serde::Serialize;
 use std::{
-    collections::{BTreeMap, BTreeSet},
+    collections::BTreeMap,
     env,
     ffi::OsString,
     fs,
@@ -8,7 +8,7 @@ use std::{
     path::{Path, PathBuf},
     process::{Command, Stdio},
     thread,
-    time::{Duration, Instant},
+    time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
 
 const MAX_PATH_ENTRIES: usize = 64;
@@ -105,22 +105,14 @@ struct Discovery {
 
 impl Discovery {
     fn note(&mut self, tool: ToolId, message: impl Into<String>) {
+        let message = message.into();
         let notes = self.notes.entry(tool).or_default();
-        if !notes.contains(&message.into()) {
-            // Keep diagnostics bounded and deterministic.
-            if notes.len() < 8 {
-                notes.push(message.into());
-            }
+        if !notes.contains(&message) && notes.len() < 8 {
+            notes.push(message);
         }
     }
 
     fn add(&mut self, tool: ToolId, executable: PathBuf, artifact: Option<PathBuf>) {
-        let candidates = self.candidates.entry(tool).or_default();
-        if candidates.len() >= MAX_CANDIDATES_PER_TOOL {
-            self.note(tool, "Candidate limit reached; additional installations were not inspected.");
-            return;
-        }
-
         let Ok(canonical) = executable.canonicalize() else {
             return;
         };
@@ -130,15 +122,21 @@ impl Discovery {
 
         let canonical_artifact = artifact.and_then(|path| path.canonicalize().ok())
             .filter(|path| path.is_file());
+        let candidates = self.candidates.entry(tool).or_default();
         let duplicate = candidates.iter().any(|item| {
             item.executable == canonical && item.artifact == canonical_artifact
         });
-        if !duplicate {
-            candidates.push(Candidate {
-                executable: canonical,
-                artifact: canonical_artifact,
-            });
+        if duplicate {
+            return;
         }
+        if candidates.len() >= MAX_CANDIDATES_PER_TOOL {
+            self.note(tool, "Candidate limit reached; additional installations were not inspected.");
+            return;
+        }
+        candidates.push(Candidate {
+            executable: canonical,
+            artifact: canonical_artifact,
+        });
     }
 }
 
@@ -157,7 +155,8 @@ fn add_path_candidates(discovery: &mut Discovery) {
         return;
     };
 
-    for (index, directory) in env::split_paths(&path_value).take(MAX_PATH_ENTRIES).enumerate() {
+    let path_entries: Vec<_> = env::split_paths(&path_value).take(MAX_PATH_ENTRIES + 1).collect();
+    for directory in path_entries.iter().take(MAX_PATH_ENTRIES) {
         if !directory.is_dir() {
             continue;
         }
@@ -168,10 +167,10 @@ fn add_path_candidates(discovery: &mut Discovery) {
         if composer.is_file() {
             discovery.add(ToolId::Composer, composer, None);
         }
-        if index + 1 == MAX_PATH_ENTRIES {
-            for tool in [ToolId::Node, ToolId::Php, ToolId::Java, ToolId::Rustc, ToolId::Cargo, ToolId::Git, ToolId::Composer] {
-                discovery.note(tool, "PATH entry limit reached; remaining entries were not inspected.");
-            }
+    }
+    if path_entries.len() > MAX_PATH_ENTRIES {
+        for tool in [ToolId::Node, ToolId::Php, ToolId::Java, ToolId::Rustc, ToolId::Cargo, ToolId::Git, ToolId::Composer] {
+            discovery.note(tool, "PATH entry limit reached; remaining entries were not inspected.");
         }
     }
 }
@@ -374,8 +373,7 @@ fn parse_version(tool: ToolId, output: &str) -> Option<String> {
 fn inspect_candidate(tool: ToolId, candidate: &Candidate, php_runner: Option<&Path>) -> Result<Installation, String> {
     let (program, args): (PathBuf, Vec<OsString>) = if tool == ToolId::Composer {
         let php = php_runner.ok_or_else(|| "Composer requires exactly one validated PHP installation.".to_string())?;
-        let artifact = candidate.artifact.as_ref()
-            .ok_or_else(|| "Composer PHAR path could not be validated.".to_string())?;
+        let artifact = candidate.artifact.as_ref().unwrap_or(&candidate.executable);
         (php.to_path_buf(), vec![artifact.as_os_str().to_owned(), OsString::from("--version")])
     } else {
         (
@@ -404,7 +402,11 @@ fn inspect_candidate(tool: ToolId, candidate: &Candidate, php_runner: Option<&Pa
         } else {
             candidate.executable.to_string_lossy().into_owned()
         },
-        artifact_path: candidate.artifact.as_ref().map(|path| path.to_string_lossy().into_owned()),
+        artifact_path: if tool == ToolId::Composer {
+            Some(candidate.artifact.as_ref().unwrap_or(&candidate.executable).to_string_lossy().into_owned())
+        } else {
+            candidate.artifact.as_ref().map(|path| path.to_string_lossy().into_owned())
+        },
         version,
     })
 }
@@ -454,10 +456,12 @@ fn inspect_tool(tool: ToolId, discovery: &Discovery, php_count: usize, php_path:
     }
 
     installations.sort_by(|left, right| left.executable_path.cmp(&right.executable_path));
-    let status = match installations.len() {
-        0 => "inspectionError",
-        1 => "detected",
-        _ => "ambiguous",
+    let status = if candidates.len() > 1 {
+        "ambiguous"
+    } else if installations.len() == 1 {
+        "detected"
+    } else {
+        "inspectionError"
     };
 
     ToolResult {
@@ -474,12 +478,9 @@ pub fn collect_inventory() -> InventorySnapshot {
     let discovery = discover();
 
     let php_candidates = discovery.candidates.get(&ToolId::Php).cloned().unwrap_or_default();
-    let php_installations: Vec<_> = php_candidates.iter()
-        .filter_map(|candidate| inspect_candidate(ToolId::Php, candidate, None).ok())
-        .collect();
-    let php_path = (php_installations.len() == 1)
-        .then(|| PathBuf::from(&php_installations[0].executable_path));
-    let php_count = php_installations.len();
+    let php_path = (php_candidates.len() == 1)
+        .then(|| php_candidates[0].executable.clone());
+    let php_count = php_candidates.len();
 
     let tools = [
         ToolId::Node, ToolId::Php, ToolId::Java, ToolId::Rustc,
@@ -490,7 +491,11 @@ pub fn collect_inventory() -> InventorySnapshot {
     .collect();
 
     InventorySnapshot {
-        scanned_at: "local".to_string(),
+        scanned_at: SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs()
+            .to_string(),
         tools,
     }
 }
