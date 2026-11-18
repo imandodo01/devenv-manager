@@ -1,6 +1,6 @@
 # M2 — Environment Inventory & Runtime Detection
 
-**Development:** Not Started | **Test Preparation:** Preparing | **Acceptance:** Pending  
+**Development:** Not Started | **Test Preparation:** Ready for implementation review | **Acceptance:** Pending  
 **Issue:** [#5 — Environment Inventory & Runtime Detection](https://github.com/imandodo01/devenv-manager/issues/5)  
 **Dependency:** M0 and M1 accepted
 
@@ -8,12 +8,68 @@
 
 Provide a truthful, read-only inventory of an explicitly agreed initial set of Windows developer tools/runtimes, including version and executable location where available.
 
+## Approved initial support matrix
+
+The initial M2 matrix is accepted:
+
+| Area | Tool | Detection target |
+|---|---|---|
+| Runtime | Node.js | `node.exe` |
+| Runtime | PHP | `php.exe` |
+| Runtime | Java | `java.exe` |
+| Runtime | Rust toolchain | `rustc.exe` and `cargo.exe` |
+| Development tool | Git | `git.exe` |
+| Development tool | Composer | `composer.phar` executed through PHP |
+
+Python is deferred to a later phase. Git and Composer are development tools, not runtimes. Rust is one supported toolchain with two independently reported executables.
+
+## Proposed detection-source policy — pending review
+
+The implementation proposal is intentionally conservative and best-effort. It does not promise discovery of every custom installation.
+
+1. Inspect direct executable candidates in the current process `PATH` entries. Do not invoke `where.exe` or a shell to resolve commands.
+2. Inspect explicit tool/manager roots when present:
+   - Node.js: `NVM_HOME` and `NVM_SYMLINK`.
+   - PHP: `PHP_HOME`.
+   - Java: `JAVA_HOME`.
+   - Rust: `CARGO_HOME` and `%USERPROFILE%\\.cargo`.
+3. Inspect a small set of conventional Windows locations:
+   - `%ProgramFiles%\\nodejs`, `%ProgramFiles%\\PHP`, `%ProgramFiles%\\Git`.
+   - Direct child JDK directories under `%ProgramFiles%\\Java`.
+   - `%ProgramData%\\ComposerSetup\\bin\\composer.phar`.
+4. For version-manager roots that contain version directories, inspect direct child directories only. Do not recurse into arbitrary subdirectories.
+5. Composer is discovered as a PHAR file. Read and execute it only through one unambiguous validated `php.exe` candidate with fixed arguments. Never execute `.bat` or `.cmd` wrappers.
+6. Do not inspect the Windows registry, scan whole drives, query network catalogs, or transmit local inventory.
+
+Proposed hard limits:
+- At most 64 current `PATH` entries.
+- At most 32 direct child directories per version-manager root.
+- At most 8 retained candidates per tool.
+- A 3-second timeout per version command.
+- At most 8 KiB retained from each of stdout and stderr; continue draining streams after the retained limit is reached.
+
+The source policy and limits are proposals until reviewed. Any additional source (registry, another version manager, recursive search, network service) requires a separate scope decision.
+
+## Fixed version commands
+
+| Tool | Executable / runner | Fixed arguments |
+|---|---|---|
+| Node.js | Validated `node.exe` | `--version` |
+| PHP | Validated `php.exe` | `--version` |
+| Java | Validated `java.exe` | `-version` |
+| Rust compiler | Validated `rustc.exe` | `--version` |
+| Cargo | Validated `cargo.exe` | `--version` |
+| Git | Validated `git.exe` | `--version` |
+| Composer | Validated `php.exe` + discovered `composer.phar` | `<composer.phar path> --version` |
+
+No shell interpolation is used. Process exit status and parsed version are separate evidence. Unexpected output remains unknown; it must not be guessed.
+
 ## Scope
 
-1. Audit the current Windows/runtime detection options and decide the initial supported tool matrix.
+1. Implement the approved support matrix and reviewed bounded detection-source policy.
 2. Define the typed detection result and stable Rust/frontend contract.
-3. Implement bounded, read-only discovery from approved sources only.
-4. Validate executable paths and obtain version metadata safely.
+3. Implement read-only discovery and validate candidate executable paths.
+4. Obtain version metadata with fixed commands, timeouts, and bounded output.
 5. Display real inventory results in the Environment page.
 6. Add automated tests, local Windows verification instructions, and acceptance records.
 
@@ -21,48 +77,39 @@ Provide a truthful, read-only inventory of an explicitly agreed initial set of W
 
 - Installing, downloading, upgrading, uninstalling, or switching runtimes.
 - Changing Process, User, or Machine environment variables or PATH.
-- Whole-disk recursive scanning.
-- Executing project scripts or constructing shell commands from detected values.
+- Whole-disk or recursive directory scanning.
+- Executing project scripts, shell wrappers, or commands constructed from detected values.
 - Selecting an arbitrary installation when multiple candidates exist.
-- Claiming support for every candidate ecosystem before the support matrix is approved.
+- Registry discovery, network lookup, telemetry, or remote inventory upload.
+- Claiming support for Python or other ecosystems outside the approved matrix.
 
-## Open decisions — resolve before implementation
+## Detection result contract
 
-- Which ecosystems/tools are in the first supported matrix?
-- Which bounded detection sources are trusted for each ecosystem (PATH lookup, known install locations, registry, version-manager directories, or other sources)?
-- How are duplicate installations represented and how is ambiguity surfaced?
-- Which version command/arguments are permitted for each adapter?
-- What timeout and output limits are appropriate?
-- Which filesystem/process permissions are required, and can the design avoid adding broad Tauri capabilities?
-- How are localized/unexpected version outputs represented without guessing?
+The contract must preserve these distinct outcomes:
 
-Candidate tools for evaluation, not pre-approved requirements: Node.js, PHP, Java, Git, Composer, Rust/Cargo, Python.
+- **Detected:** exactly one validated installation has usable metadata.
+- **Not found:** approved sources were inspected successfully and no installation was found.
+- **Ambiguous:** multiple installations exist; all retained candidates are shown and no default is selected.
+- **Inspection error:** a source or candidate could not be inspected, a process failed/timed out, or version output could not be parsed.
 
-## Proposed detection result states
-
-The exact names/types are an implementation decision, but the contract must preserve these distinct outcomes:
-
-- **Detected:** one or more validated installations with known metadata.
-- **Not found:** approved sources were checked successfully and no installation was found.
-- **Ambiguous:** multiple candidates exist and no single selection is justified.
-- **Inspection error:** a source could not be inspected or a candidate could not be validated.
-
-Do not collapse missing, ambiguous, and error into an empty list or a generic false value.
+Do not collapse missing, ambiguous, and error into an empty list or a generic false value. If a configured candidate limit is reached or a source cannot be inspected, mark the result incomplete and explain why.
 
 ## Safety requirements
 
 - Read-only inspection only.
 - Bounded paths and bounded work; no unbounded whole-disk search.
-- Validate and normalize candidate executable paths before use.
-- If a version process is needed, invoke a fixed executable with fixed arguments; do not use shell interpolation.
-- Enforce timeout and bounded stdout/stderr.
+- Canonicalize and validate candidate paths before metadata retrieval.
+- Only execute validated executable files with fixed argument lists; no shell interpolation or wrapper execution.
+- Enforce timeout and bounded stdout/stderr; kill a timed-out child process.
 - Treat process exit code and parsed version as separate evidence.
 - Never change PATH or other machine configuration.
-- Do not expose sensitive environment values in UI/logs.
+- Do not expose full environment variables or unrelated environment values in UI/logs.
+- Keep Tauri capabilities minimal; do not add filesystem/process plugins or broad frontend permissions for this feature.
 
 ## Acceptance criteria
 
-- [ ] Initial supported tool/runtime matrix and detection sources are documented and approved.
+- [x] Initial supported tool/runtime matrix is documented and approved.
+- [ ] Detection-source policy and limits are reviewed and approved.
 - [ ] Detection result contract is typed, documented, and distinguishes detected, missing, ambiguous, and error.
 - [ ] Multiple installations are retained; no arbitrary default is implied.
 - [ ] Discovery is read-only, bounded, deterministic, and limited to approved sources.
@@ -71,14 +118,14 @@ Do not collapse missing, ambiguous, and error into an empty list or a generic fa
 - [ ] Environment UI shows real detected data and honest unavailable/ambiguous/error states.
 - [ ] Tests cover found, missing, duplicate/ambiguous, invalid path, malformed output, process failure, timeout, and permission/error cases as applicable.
 - [ ] Lint, typecheck, frontend tests/build, and relevant Cargo checks pass.
-- [ ] Windows local verification confirms expected detections and no PATH/environment changes.
+- [ ] Windows local verification confirms expected detections and no environment configuration changes.
 - [ ] Product docs, test strategy, and acceptance register are updated.
 - [ ] User acceptance is recorded before merge.
 
 ## Verification plan
 
 ### Automated
-- Unit-test path validation, candidate deduplication, result-state mapping, version parsing, timeout/error mapping, and deterministic ordering.
+- Unit-test path validation, candidate deduplication, result-state mapping, version parsing, timeout/error mapping, output limits, and deterministic ordering.
 - Test Tauri command serialization/contract where practical.
 - Frontend tests cover detected, empty, ambiguous, and error UI states.
 - Run the project-standard npm and Cargo checks.
@@ -89,6 +136,7 @@ Do not collapse missing, ambiguous, and error into an empty list or a generic fa
 - Compare displayed executable paths/versions against independently run commands.
 - Confirm no Process/User/Machine PATH or environment values changed.
 - Capture concise, redacted evidence and record pass/fail.
+- Note custom installations not found by the bounded sources; do not infer that they are absent from the machine.
 
 ## Parallel preparation
 
@@ -101,4 +149,4 @@ These activities must not introduce competing runtime types, start environment m
 
 ## Estimate
 
-5–7 hours initial planning estimate. Re-estimate after the support matrix and detection-source audit.
+5–7 focused person-hours baseline, including discovery, implementation, tests, documentation, and review. Re-estimate after the detection-source policy is accepted and code structure is inspected.
