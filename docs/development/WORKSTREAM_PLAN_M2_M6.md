@@ -2,7 +2,7 @@
 
 **Status:** Planning baseline — pending user review  
 **Prepared:** 2026-11-17  
-**Base:** `main` after M1 acceptance  
+**Base:** `main` after M1 acceptance and the M2 planning decision in PR #5  
 **Purpose:** Enable useful parallel preparation and implementation without allowing unstable contracts or Windows-only verification to become integration risks.
 
 ## 1. Current baseline
@@ -20,7 +20,7 @@ This plan does not convert open product questions into approved requirements.
 
 | ID | Workstream | Primary issue | Outcome | Execution mode |
 |---|---|---|---|---|
-| A | Runtime Core | [#5 M2](https://github.com/imandodo01/devenv-manager/issues/5), [#6 M3](https://github.com/imandodo01/devenv-manager/issues/6) | Read-only inventory, detection contract, runtime metadata and installed-version model | M2 first; M3 follows stable M2 contract |
+| A | Runtime Core | [#11 M2 implementation](https://github.com/imandodo01/devenv-manager/issues/11), [#6 M3](https://github.com/imandodo01/devenv-manager/issues/6) | Read-only inventory, detection contract, runtime metadata and installed-version model | M2 first; M3 follows stable M2 contract |
 | B | Runtime Operations | [#7 M4](https://github.com/imandodo01/devenv-manager/issues/7) | Safe, previewed, approved global runtime switching with verification and recovery | Design/test preparation can begin after M2 contract review; implementation after M2/M3 |
 | C | Project Intelligence | [#8 M5](https://github.com/imandodo01/devenv-manager/issues/8) | Parse agreed project metadata and compare requirements with local capabilities | Research, fixtures, and test design can run alongside M2; implementation after capability contract is stable |
 | D | Integration & UX | [#9 M6](https://github.com/imandodo01/devenv-manager/issues/9) | Integrated, accessible, consistent end-to-end workflows | UX audit and test planning can run early; final integration after M1–M5 |
