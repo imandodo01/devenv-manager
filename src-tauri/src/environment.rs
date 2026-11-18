@@ -151,9 +151,15 @@ impl Discovery {
             );
             return;
         }
-        self.candidates.entry(tool).or_default().push(Candidate {
+        let candidates = self.candidates.entry(tool).or_default();
+        candidates.push(Candidate {
             executable: canonical,
             artifact: canonical_artifact,
+        });
+        candidates.sort_by(|left, right| {
+            left.executable
+                .cmp(&right.executable)
+                .then_with(|| left.artifact.cmp(&right.artifact))
         });
     }
 }
@@ -706,7 +712,11 @@ fn inspect_tool(
         }
     }
 
-    installations.sort_by(|left, right| left.executable_path.cmp(&right.executable_path));
+    installations.sort_by(|left, right| {
+        left.executable_path
+            .cmp(&right.executable_path)
+            .then_with(|| left.artifact_path.cmp(&right.artifact_path))
+    });
     let usable_versions = installations
         .iter()
         .filter(|installation| installation.version.is_some())
@@ -920,6 +930,32 @@ mod tests {
             candidates[0].executable,
             version_directory.join("node.exe").canonicalize().unwrap()
         );
+
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn candidate_paths_are_sorted_independently_of_discovery_order() {
+        let root = std::env::temp_dir().join(format!(
+            "dem-sorted-candidates-{}",
+            std::process::id()
+        ));
+        let first_directory = root.join("a");
+        let second_directory = root.join("z");
+        fs::create_dir_all(&first_directory).expect("create first directory");
+        fs::create_dir_all(&second_directory).expect("create second directory");
+        let first = first_directory.join("node.exe");
+        let second = second_directory.join("node.exe");
+        fs::write(&first, b"first fixture").expect("create first fixture");
+        fs::write(&second, b"second fixture").expect("create second fixture");
+
+        let mut discovery = Discovery::default();
+        discovery.add(ToolId::Node, second, None);
+        discovery.add(ToolId::Node, first.clone(), None);
+
+        let candidates = discovery.candidates.get(&ToolId::Node).unwrap();
+        assert_eq!(candidates.len(), 2);
+        assert_eq!(candidates[0].executable, first.canonicalize().unwrap());
 
         let _ = fs::remove_dir_all(root);
     }
