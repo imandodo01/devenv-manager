@@ -475,10 +475,9 @@ fn run_bounded(executable: &Path, arguments: &[OsString]) -> Result<CommandOutpu
 
 fn parse_version_token(value: &str) -> Option<String> {
     let token = value.split_whitespace().next()?;
-    let candidate = token
-        .trim_matches(|character: char| {
-            !character.is_ascii_alphanumeric() && !matches!(character, '.' | '+' | '-' | '_')
-        });
+    let candidate = token.trim_matches(|character: char| {
+        !character.is_ascii_alphanumeric() && !matches!(character, '.' | '+' | '-' | '_')
+    });
     let has_digit = candidate
         .chars()
         .any(|character| character.is_ascii_digit());
@@ -495,25 +494,22 @@ fn parse_version(tool: ToolId, output: &str) -> Option<String> {
     for line in output.lines() {
         let line = line.trim();
         let value = match tool {
-            ToolId::Node => line
-                .strip_prefix('v')
-                .filter(|value| {
-                    value
-                        .chars()
-                        .next()
-                        .is_some_and(|character| character.is_ascii_digit())
-                }),
+            ToolId::Node => line.strip_prefix('v').filter(|value| {
+                value
+                    .chars()
+                    .next()
+                    .is_some_and(|character| character.is_ascii_digit())
+            }),
             ToolId::Php => line.strip_prefix("PHP "),
             ToolId::Java => {
-                if line.to_ascii_lowercase().contains("version") {
-                    if let Some(start) = line.find('"') {
-                        let quoted = &line[start + 1..];
-                        if let Some(end) = quoted.find('"') {
-                            if let Some(version) = parse_version_token(&quoted[..end]) {
-                                return Some(version);
-                            }
-                        }
-                    }
+                let version = line
+                    .to_ascii_lowercase()
+                    .contains("version")
+                    .then(|| line.split('"').nth(1))
+                    .flatten()
+                    .and_then(parse_version_token);
+                if version.is_some() {
+                    return version;
                 }
                 None
             }
@@ -523,10 +519,8 @@ fn parse_version(tool: ToolId, output: &str) -> Option<String> {
             ToolId::Composer => line.strip_prefix("Composer version "),
         };
 
-        if let Some(value) = value {
-            if let Some(version) = parse_version_token(value) {
-                return Some(version);
-            }
+        if let Some(version) = value.and_then(parse_version_token) {
+            return Some(version);
         }
     }
 
@@ -564,18 +558,14 @@ fn inspect_candidate(
         return Err("Version command exceeded the 3-second time limit.".to_string());
     }
     if output.exit_code != Some(0) {
-        return Err(
-            "Version command returned a non-zero or unavailable exit code.".to_string(),
-        );
+        return Err("Version command returned a non-zero or unavailable exit code.".to_string());
     }
 
     let stdout = String::from_utf8_lossy(&output.stdout);
     let stderr = String::from_utf8_lossy(&output.stderr);
     let combined = format!("{stdout}\n{stderr}");
     let version = parse_version(tool, &combined)
-        .ok_or_else(|| {
-            "Version output was not recognized; no version was inferred.".to_string()
-        })?;
+        .ok_or_else(|| "Version output was not recognized; no version was inferred.".to_string())?;
 
     Ok(Installation {
         executable_path: if tool == ToolId::Composer {
@@ -645,8 +635,7 @@ fn inspect_tool(
 
     if tool == ToolId::Composer && php_count != 1 {
         notes.push(if php_count == 0 {
-            "Composer PHAR was found, but no validated PHP installation is available."
-                .to_string()
+            "Composer PHAR was found, but no validated PHP installation is available.".to_string()
         } else {
             "Composer PHAR was found, but PHP detection is ambiguous; no PHP runner was selected."
                 .to_string()
@@ -883,38 +872,30 @@ mod tests {
 
     #[test]
     fn missing_candidate_is_not_reported_as_a_discovery_error() {
-        let missing = std::env::temp_dir().join(format!(
-            "dem-missing-node-{}.exe",
-            std::process::id()
-        ));
+        let missing =
+            std::env::temp_dir().join(format!("dem-missing-node-{}.exe", std::process::id()));
         let mut discovery = Discovery::default();
 
         discovery.add(ToolId::Node, missing, None);
 
-        assert!(discovery.candidates.get(&ToolId::Node).is_none());
-        assert!(discovery.notes.get(&ToolId::Node).is_none());
+        assert!(!discovery.candidates.contains_key(&ToolId::Node));
+        assert!(!discovery.notes.contains_key(&ToolId::Node));
     }
 
     #[test]
     fn missing_configured_root_is_reported_as_incomplete() {
-        let missing = std::env::temp_dir().join(format!(
-            "dem-missing-root-{}",
-            std::process::id()
-        ));
+        let missing = std::env::temp_dir().join(format!("dem-missing-root-{}", std::process::id()));
         let mut discovery = Discovery::default();
 
         add_configured_root(&mut discovery, ToolId::Node, &missing, false);
 
-        assert!(discovery.candidates.get(&ToolId::Node).is_none());
+        assert!(!discovery.candidates.contains_key(&ToolId::Node));
         assert!(!discovery.notes.get(&ToolId::Node).unwrap().is_empty());
     }
 
     #[test]
     fn version_manager_root_scans_direct_children_without_using_root_executable() {
-        let root = std::env::temp_dir().join(format!(
-            "dem-nvm-root-{}",
-            std::process::id()
-        ));
+        let root = std::env::temp_dir().join(format!("dem-nvm-root-{}", std::process::id()));
         let version_directory = root.join("v22.23.4");
         fs::create_dir_all(&version_directory).expect("create version directory");
         fs::write(root.join("node.exe"), b"root fixture").expect("create root fixture");
@@ -936,10 +917,8 @@ mod tests {
 
     #[test]
     fn candidate_paths_are_sorted_independently_of_discovery_order() {
-        let root = std::env::temp_dir().join(format!(
-            "dem-sorted-candidates-{}",
-            std::process::id()
-        ));
+        let root =
+            std::env::temp_dir().join(format!("dem-sorted-candidates-{}", std::process::id()));
         let first_directory = root.join("a");
         let second_directory = root.join("z");
         fs::create_dir_all(&first_directory).expect("create first directory");
@@ -982,10 +961,8 @@ mod tests {
 
     #[test]
     fn invalid_candidate_filename_is_reported_as_incomplete() {
-        let directory = std::env::temp_dir().join(format!(
-            "dem-m2-invalid-candidate-{}",
-            std::process::id()
-        ));
+        let directory =
+            std::env::temp_dir().join(format!("dem-m2-invalid-candidate-{}", std::process::id()));
         fs::create_dir_all(&directory).expect("create test directory");
         let executable = directory.join("not-node.exe");
         fs::write(&executable, b"test fixture").expect("create fixture");
@@ -993,7 +970,7 @@ mod tests {
         let mut discovery = Discovery::default();
         discovery.add(ToolId::Node, executable.clone(), None);
 
-        assert!(discovery.candidates.get(&ToolId::Node).is_none());
+        assert!(!discovery.candidates.contains_key(&ToolId::Node));
         assert!(!discovery.notes.get(&ToolId::Node).unwrap().is_empty());
         let _ = fs::remove_file(executable);
         let _ = fs::remove_dir(directory);
