@@ -218,7 +218,7 @@ Any change to a shared public type must be proposed in its owning issue/PR and c
 
 The original M2 preparation checklist has been superseded by the 2026-11-19 execution baseline and handoff in [PROJECT_STATUS.md](PROJECT_STATUS.md). Keep this plan focused on milestone dependencies and scope; use the project status record for the current next action and estimate.
 
-## 10. Definition of Ready / Done
+## 11. Definition of Ready / Done
 
 A work item is Ready when:
 - Scope and non-goals are explicit.
@@ -234,7 +234,7 @@ A work item is Done only when:
 - PR review and user acceptance are complete.
 - Remaining limitations are recorded.
 
-## 11. Estimates
+## 12. Estimates
 
 Initial issue estimates (planning only):
 - M2: 5–7 hours.
