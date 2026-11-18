@@ -16,7 +16,7 @@ export type DetectionStatus =
 export type EnvironmentInstallation = {
   executablePath: string;
   artifactPath: string | null;
-  version: string;
+  version: string | null;
 };
 
 export type EnvironmentToolResult = {
