@@ -1,8 +1,10 @@
 mod environment;
 
 #[tauri::command]
-fn get_environment_inventory() -> environment::InventorySnapshot {
-    environment::collect_inventory()
+async fn get_environment_inventory() -> Result<environment::InventorySnapshot, String> {
+    tauri::async_runtime::spawn_blocking(environment::collect_inventory)
+        .await
+        .map_err(|error| error.to_string())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
