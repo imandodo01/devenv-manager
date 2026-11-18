@@ -8,7 +8,11 @@ describe("overview capability summary", () => {
     const markup = renderToStaticMarkup(createElement(OverviewPage));
 
     expect(markup).toContain("Read-only inventory and runtime detection are available in M2.");
+    const environmentCard = markup.match(/<article\\b[\\s\\S]*?<\\/article>/)?.[0];
+
     expect(markup).toContain("Available");
+    expect(environmentCard).toContain("Ready to use");
+    expect(environmentCard).not.toContain("Not available yet");
     expect(markup).not.toContain("Tool and runtime detection is planned for M2.");
     expect(markup).toContain("M3 · Runtime information");
   });
