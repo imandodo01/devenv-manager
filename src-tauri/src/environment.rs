@@ -363,7 +363,7 @@ fn parse_version(tool: ToolId, output: &str) -> Option<String> {
                 character.is_ascii_alphanumeric() || matches!(character, '.' | '+' | '-' | '_')
             });
 
-        if valid && (candidate.contains('.') || candidate.chars().all(|c| c.is_ascii_digit())) {
+        if valid && candidate.contains('.') {
             return Some(candidate.to_string());
         }
     }
@@ -550,6 +550,7 @@ mod tests {
     fn rejects_unrecognized_version_output() {
         assert_eq!(parse_version(ToolId::Node, "node is installed"), None);
         assert_eq!(parse_version(ToolId::Php, "PHP development build"), None);
+        assert_eq!(parse_version(ToolId::Node, "build 2026"), None);
     }
 
     #[test]
