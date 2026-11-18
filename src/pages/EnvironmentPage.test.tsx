@@ -54,7 +54,9 @@ const baseSnapshot: EnvironmentInventorySnapshot = {
       tool: "git",
       label: "Git",
       status: "inspectionError",
-      installations: [],
+      installations: [
+        { executablePath: "C:/Program Files/Git/cmd/git.exe", artifactPath: null, version: null },
+      ],
       incomplete: true,
       notes: ["Version command exceeded the 3-second time limit."],
     },
@@ -78,6 +80,7 @@ describe("environment inventory presentation", () => {
     expect(markup).toContain("Inspection incomplete");
     expect(markup).toContain("C:/Java/jdk-17/bin/java.exe");
     expect(markup).toContain("3-second time limit");
+    expect(markup).toContain("Version unavailable");
   });
 
   it("shows loading and command errors without inventing inventory data", () => {
