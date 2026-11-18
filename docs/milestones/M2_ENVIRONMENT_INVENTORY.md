@@ -35,7 +35,7 @@ This policy was reviewed and approved on 2026-11-18. Detection remains intention
    - Java: `JAVA_HOME`.
    - Rust: `CARGO_HOME` and `%USERPROFILE%\\.cargo`.
 3. Inspect a small set of conventional Windows locations:
-   - `%ProgramFiles%\\nodejs`, `%ProgramFiles%\\PHP`, `%ProgramFiles%\\Git`.
+   - `%ProgramFiles%\\nodejs`, `%ProgramFiles%\\PHP`, `%ProgramFiles%\\Git\\cmd\\git.exe`.
    - Direct child JDK directories under `%ProgramFiles%\\Java`.
    - `%ProgramData%\\ComposerSetup\\bin\\composer.phar`.
 4. For version-manager roots that contain version directories, inspect direct child directories only. Do not recurse into arbitrary subdirectories.
