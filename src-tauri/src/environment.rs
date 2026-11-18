@@ -502,14 +502,14 @@ fn parse_version(tool: ToolId, output: &str) -> Option<String> {
             }),
             ToolId::Php => line.strip_prefix("PHP "),
             ToolId::Java => {
-                let version = line
+                if let Some(version) = line
                     .to_ascii_lowercase()
                     .contains("version")
                     .then(|| line.split('"').nth(1))
                     .flatten()
-                    .and_then(parse_version_token);
-                if version.is_some() {
-                    return version;
+                    .and_then(parse_version_token)
+                {
+                    return Some(version);
                 }
                 None
             }
