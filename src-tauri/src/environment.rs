@@ -129,17 +129,20 @@ impl Discovery {
             return;
         }
 
-        let canonical_artifact = artifact.and_then(|path| path.canonicalize().ok())
+        let canonical_artifact = artifact
+            .and_then(|path| path.canonicalize().ok())
             .filter(|path| path.is_file());
         let duplicate = self.candidates.get(&tool).is_some_and(|candidates| {
-            candidates.iter().any(|item| {
-                item.executable == canonical && item.artifact == canonical_artifact
-            })
+            candidates
+                .iter()
+                .any(|item| item.executable == canonical && item.artifact == canonical_artifact)
         });
         if duplicate {
             return;
         }
-        let at_limit = self.candidates.get(&tool)
+        let at_limit = self
+            .candidates
+            .get(&tool)
             .is_some_and(|candidates| candidates.len() >= MAX_CANDIDATES_PER_TOOL);
         if at_limit {
             self.note(
@@ -162,7 +165,9 @@ fn has_expected_name(path: &Path, expected: &str) -> bool {
 }
 
 fn env_path(name: &str) -> Option<PathBuf> {
-    env::var_os(name).filter(|value| !value.is_empty()).map(PathBuf::from)
+    env::var_os(name)
+        .filter(|value| !value.is_empty())
+        .map(PathBuf::from)
 }
 
 fn add_path_candidates(discovery: &mut Discovery) {
@@ -181,7 +186,9 @@ fn add_path_candidates(discovery: &mut Discovery) {
         return;
     };
 
-    let path_entries: Vec<_> = env::split_paths(&path_value).take(MAX_PATH_ENTRIES + 1).collect();
+    let path_entries: Vec<_> = env::split_paths(&path_value)
+        .take(MAX_PATH_ENTRIES + 1)
+        .collect();
     for directory in path_entries.iter().take(MAX_PATH_ENTRIES) {
         match fs::metadata(directory) {
             Ok(metadata) if metadata.is_dir() => {}
@@ -203,7 +210,12 @@ fn add_path_candidates(discovery: &mut Discovery) {
             }
         }
         for tool in [
-            ToolId::Node, ToolId::Php, ToolId::Java, ToolId::Rustc, ToolId::Cargo, ToolId::Git,
+            ToolId::Node,
+            ToolId::Php,
+            ToolId::Java,
+            ToolId::Rustc,
+            ToolId::Cargo,
+            ToolId::Git,
         ] {
             discovery.add(tool, directory.join(tool.executable_name()), None);
         }
@@ -215,7 +227,10 @@ fn add_path_candidates(discovery: &mut Discovery) {
             ToolId::Node, ToolId::Php, ToolId::Java, ToolId::Rustc, ToolId::Cargo, ToolId::Git,
             ToolId::Composer,
         ] {
-            discovery.note(tool, "PATH entry limit reached; remaining entries were not inspected.");
+            discovery.note(
+                tool,
+                "PATH entry limit reached; remaining entries were not inspected.",
+            );
         }
     }
 }
@@ -234,9 +249,12 @@ fn add_manager_root(
     let entries = match fs::read_dir(root) {
         Ok(entries) => entries,
         Err(error) if error.kind() == ErrorKind::NotFound => {
-            discovery.note(tool, "A configured version-manager directory does not exist.");
+            discovery.note(
+                tool,
+                "A configured version-manager directory does not exist.",
+            );
             return;
-        },
+        }
         Err(_) => {
             discovery.note(tool, "Could not inspect a configured tool directory.");
             return;
@@ -309,9 +327,19 @@ fn discover() -> Discovery {
     }
 
     if let Some(program_files) = env_path("ProgramFiles") {
-        add_manager_root(&mut result, ToolId::Node, &program_files.join("nodejs"), false);
+        add_manager_root(
+            &mut result,
+            ToolId::Node,
+            &program_files.join("nodejs"),
+            false,
+        );
         add_manager_root(&mut result, ToolId::Php, &program_files.join("PHP"), false);
-        add_manager_root(&mut result, ToolId::Git, &program_files.join("Git").join("cmd"), false);
+        add_manager_root(
+            &mut result,
+            ToolId::Git,
+            &program_files.join("Git").join("cmd"),
+            false,
+        );
 
         let java_root = program_files.join("Java");
         match fs::read_dir(&java_root) {
@@ -352,7 +380,10 @@ fn discover() -> Discovery {
     }
 
     if let Some(program_data) = env_path("ProgramData") {
-        let composer = program_data.join("ComposerSetup").join("bin").join("composer.phar");
+        let composer = program_data
+            .join("ComposerSetup")
+            .join("bin")
+            .join("composer.phar");
         result.add(ToolId::Composer, composer, None);
     }
 
@@ -452,7 +483,12 @@ fn parse_version(tool: ToolId, output: &str) -> Option<String> {
         let value = match tool {
             ToolId::Node => line
                 .strip_prefix('v')
-                .filter(|value| value.chars().next().is_some_and(|character| character.is_ascii_digit())),
+                .filter(|value| {
+                    value
+                        .chars()
+                        .next()
+                        .is_some_and(|character| character.is_ascii_digit())
+                }),
             ToolId::Php => line.strip_prefix("PHP "),
             ToolId::Java => {
                 if line.to_ascii_lowercase().contains("version") {
@@ -511,14 +547,18 @@ fn inspect_candidate(
         return Err("Version command exceeded the 3-second time limit.".to_string());
     }
     if output.exit_code != Some(0) {
-        return Err("Version command returned a non-zero or unavailable exit code.".to_string());
+        return Err(
+            "Version command returned a non-zero or unavailable exit code.".to_string(),
+        );
     }
 
     let stdout = String::from_utf8_lossy(&output.stdout);
     let stderr = String::from_utf8_lossy(&output.stderr);
     let combined = format!("{stdout}\n{stderr}");
     let version = parse_version(tool, &combined)
-        .ok_or_else(|| "Version output was not recognized; no version was inferred.".to_string())?;
+        .ok_or_else(|| {
+            "Version output was not recognized; no version was inferred.".to_string()
+        })?;
 
     Ok(Installation {
         executable_path: if tool == ToolId::Composer {
@@ -585,25 +625,29 @@ fn inspect_tool(
 
     if tool == ToolId::Composer && php_count != 1 {
         notes.push(if php_count == 0 {
-            "Composer PHAR was found, but no validated PHP installation is available.".to_string()
+            "Composer PHAR was found, but no validated PHP installation is available."
+                .to_string()
         } else {
             "Composer PHAR was found, but PHP detection is ambiguous; no PHP runner was selected."
                 .to_string()
         });
-        let installations = candidates.iter().map(|candidate| Installation {
-            executable_path: php_path
-                .map(|path| path.to_string_lossy().into_owned())
-                .unwrap_or_default(),
-            artifact_path: Some(
-                candidate
-                    .artifact
-                    .as_ref()
-                    .unwrap_or(&candidate.executable)
-                    .to_string_lossy()
-                    .into_owned(),
-            ),
-            version: None,
-        }).collect();
+        let installations = candidates
+            .iter()
+            .map(|candidate| Installation {
+                executable_path: php_path
+                    .map(|path| path.to_string_lossy().into_owned())
+                    .unwrap_or_default(),
+                artifact_path: Some(
+                    candidate
+                        .artifact
+                        .as_ref()
+                        .unwrap_or(&candidate.executable)
+                        .to_string_lossy()
+                        .into_owned(),
+                ),
+                version: None,
+            })
+            .collect();
         return ToolResult {
             tool,
             label: tool.label(),
@@ -624,7 +668,9 @@ fn inspect_tool(
                 }
                 installations.push(Installation {
                     executable_path: if tool == ToolId::Composer {
-                        php_path.map(|path| path.to_string_lossy().into_owned()).unwrap_or_default()
+                        php_path
+                            .map(|path| path.to_string_lossy().into_owned())
+                            .unwrap_or_default()
                     } else {
                         candidate.executable.to_string_lossy().into_owned()
                     },
@@ -725,7 +771,7 @@ mod tests {
     #[test]
     fn ignores_unrelated_numeric_output_before_the_tool_version() {
         assert_eq!(
-            parse_version(ToolId::Node, "build 2026\\nv22.23.4"),
+            parse_version(ToolId::Node, "build 2026\nv22.23.4"),
             Some("22.23.4".into())
         );
         assert_eq!(parse_version(ToolId::Node, "build 2026"), None);
