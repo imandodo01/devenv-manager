@@ -115,10 +115,7 @@ impl Discovery {
     fn add(&mut self, tool: ToolId, executable: PathBuf, artifact: Option<PathBuf>) {
         let canonical = match executable.canonicalize() {
             Ok(path) => path,
-            Err(error) if error.kind() == ErrorKind::NotFound => {
-            discovery.note(tool, "A configured version-manager directory does not exist.");
-            return;
-        },
+            Err(error) if error.kind() == ErrorKind::NotFound => return,
             Err(_) => {
                 self.note(
                     tool,
@@ -211,9 +208,7 @@ fn add_path_candidates(discovery: &mut Discovery) {
             discovery.add(tool, directory.join(tool.executable_name()), None);
         }
         let composer = directory.join("composer.phar");
-        if composer.is_file() {
-            discovery.add(ToolId::Composer, composer, None);
-        }
+        discovery.add(ToolId::Composer, composer, None);
     }
     if path_entries.len() > MAX_PATH_ENTRIES {
         for tool in [
@@ -231,9 +226,8 @@ fn add_manager_root(
     root: &Path,
     nested_version_directories: bool,
 ) {
-    discovery.add(tool, root.join(tool.executable_name()), None);
-
     if !nested_version_directories {
+        discovery.add(tool, root.join(tool.executable_name()), None);
         return;
     }
 
@@ -271,25 +265,43 @@ fn add_manager_root(
     }
 }
 
+fn add_configured_root(
+    discovery: &mut Discovery,
+    tool: ToolId,
+    root: &Path,
+    nested_version_directories: bool,
+) {
+    match fs::metadata(root) {
+        Ok(metadata) if metadata.is_dir() => {
+            add_manager_root(discovery, tool, root, nested_version_directories);
+        }
+        Ok(_) => discovery.note(tool, "A configured tool path is not a directory."),
+        Err(error) if error.kind() == ErrorKind::NotFound => {
+            discovery.note(tool, "A configured tool directory does not exist.");
+        }
+        Err(_) => discovery.note(tool, "Could not inspect a configured tool directory."),
+    }
+}
+
 fn discover() -> Discovery {
     let mut result = Discovery::default();
     add_path_candidates(&mut result);
 
     if let Some(root) = env_path("NVM_HOME") {
-        add_manager_root(&mut result, ToolId::Node, &root, true);
+        add_configured_root(&mut result, ToolId::Node, &root, true);
     }
     if let Some(root) = env_path("NVM_SYMLINK") {
-        add_manager_root(&mut result, ToolId::Node, &root, false);
+        add_configured_root(&mut result, ToolId::Node, &root, false);
     }
     if let Some(root) = env_path("PHP_HOME") {
-        add_manager_root(&mut result, ToolId::Php, &root, false);
+        add_configured_root(&mut result, ToolId::Php, &root, false);
     }
     if let Some(root) = env_path("JAVA_HOME") {
-        add_manager_root(&mut result, ToolId::Java, &root.join("bin"), false);
+        add_configured_root(&mut result, ToolId::Java, &root.join("bin"), false);
     }
     if let Some(root) = env_path("CARGO_HOME") {
-        add_manager_root(&mut result, ToolId::Rustc, &root.join("bin"), false);
-        add_manager_root(&mut result, ToolId::Cargo, &root.join("bin"), false);
+        add_configured_root(&mut result, ToolId::Rustc, &root.join("bin"), false);
+        add_configured_root(&mut result, ToolId::Cargo, &root.join("bin"), false);
     }
     if let Some(root) = env_path("USERPROFILE").map(|path| path.join(".cargo").join("bin")) {
         add_manager_root(&mut result, ToolId::Rustc, &root, false);
@@ -341,9 +353,7 @@ fn discover() -> Discovery {
 
     if let Some(program_data) = env_path("ProgramData") {
         let composer = program_data.join("ComposerSetup").join("bin").join("composer.phar");
-        if composer.is_file() {
-            result.add(ToolId::Composer, composer, None);
-        }
+        result.add(ToolId::Composer, composer, None);
     }
 
     result
@@ -421,34 +431,51 @@ fn run_bounded(executable: &Path, arguments: &[OsString]) -> Result<CommandOutpu
     })
 }
 
+fn parse_version_token(value: &str) -> Option<String> {
+    let token = value.split_whitespace().next()?;
+    let candidate = token.trim_matches(|character: char| {
+        !character.is_ascii_alphanumeric() && !matches!(character, '.' | '+' | '-' | '_')
+    });
+    let has_digit = candidate.chars().any(|character| character.is_ascii_digit());
+    let valid = !candidate.is_empty()
+        && has_digit
+        && candidate.chars().all(|character| {
+            character.is_ascii_alphanumeric() || matches!(character, '.' | '+' | '-' | '_')
+        });
+
+    valid.then(|| candidate.to_string())
+}
+
 fn parse_version(tool: ToolId, output: &str) -> Option<String> {
-    for token in output.split_whitespace() {
-        let candidate = token.trim_matches(|character: char| {
-            !character.is_ascii_alphanumeric() && !matches!(character, '.' | '+' | '-' | '_')
-        }).trim_start_matches('v');
+    for line in output.lines() {
+        let line = line.trim();
+        let value = match tool {
+            ToolId::Node => line
+                .strip_prefix('v')
+                .filter(|value| value.starts_with(|character: char| character.is_ascii_digit())),
+            ToolId::Php => line.strip_prefix("PHP "),
+            ToolId::Java => {
+                if line.to_ascii_lowercase().contains("version") {
+                    let start = line.find('"')?;
+                    let quoted = &line[start + 1..];
+                    let end = quoted.find('"')?;
+                    return parse_version_token(&quoted[..end]);
+                }
+                None
+            }
+            ToolId::Rustc => line.strip_prefix("rustc "),
+            ToolId::Cargo => line.strip_prefix("cargo "),
+            ToolId::Git => line.strip_prefix("git version "),
+            ToolId::Composer => line.strip_prefix("Composer version "),
+        };
 
-        let has_digit = candidate.chars().any(|character| character.is_ascii_digit());
-        let valid = !candidate.is_empty()
-            && has_digit
-            && candidate.chars().all(|character| {
-                character.is_ascii_alphanumeric() || matches!(character, '.' | '+' | '-' | '_')
-            });
-
-        if valid && candidate.contains('.') {
-            return Some(candidate.to_string());
+        if let Some(value) = value {
+            if let Some(version) = parse_version_token(value) {
+                return Some(version);
+            }
         }
     }
 
-    if tool == ToolId::Java {
-        return output.lines().find_map(|line| {
-            let lower = line.to_ascii_lowercase();
-            if lower.contains("version") {
-                line.split('"').nth(1).map(str::to_string)
-            } else {
-                None
-            }
-        });
-    }
     None
 }
 
@@ -511,6 +538,26 @@ fn inspect_candidate(
     })
 }
 
+fn detection_status(
+    candidate_count: usize,
+    usable_version_count: usize,
+    has_discovery_errors: bool,
+) -> &'static str {
+    if candidate_count > 1 {
+        "ambiguous"
+    } else if candidate_count == 0 {
+        if has_discovery_errors {
+            "inspectionError"
+        } else {
+            "notFound"
+        }
+    } else if usable_version_count == candidate_count {
+        "detected"
+    } else {
+        "inspectionError"
+    }
+}
+
 fn inspect_tool(
     tool: ToolId,
     discovery: &Discovery,
@@ -525,7 +572,7 @@ fn inspect_tool(
         return ToolResult {
             tool,
             label: tool.label(),
-            status: if incomplete { "inspectionError" } else { "notFound" },
+            status: detection_status(0, 0, incomplete),
             installations: Vec::new(),
             incomplete,
             notes,
@@ -556,7 +603,7 @@ fn inspect_tool(
         return ToolResult {
             tool,
             label: tool.label(),
-            status: if candidates.len() > 1 { "ambiguous" } else { "inspectionError" },
+            status: detection_status(candidates.len(), 0, true),
             installations,
             incomplete: true,
             notes,
@@ -596,13 +643,11 @@ fn inspect_tool(
     }
 
     installations.sort_by(|left, right| left.executable_path.cmp(&right.executable_path));
-    let status = if candidates.len() > 1 {
-        "ambiguous"
-    } else if installations.len() == 1 && installations[0].version.is_some() {
-        "detected"
-    } else {
-        "inspectionError"
-    };
+    let usable_versions = installations
+        .iter()
+        .filter(|installation| installation.version.is_some())
+        .count();
+    let status = detection_status(candidates.len(), usable_versions, incomplete);
 
     ToolResult {
         tool,
@@ -656,6 +701,14 @@ mod tests {
             parse_version(ToolId::Java, "openjdk version \"21.0.2\" 2024-01-16"),
             Some("21.0.2".into())
         );
+        assert_eq!(
+            parse_version(ToolId::Java, "openjdk version \"25-ea\" 2026-01-01"),
+            Some("25-ea".into())
+        );
+        assert_eq!(
+            parse_version(ToolId::Composer, "Composer version 2.9.1 2025-11-04"),
+            Some("2.9.1".into())
+        );
     }
 
     #[test]
@@ -663,6 +716,24 @@ mod tests {
         assert_eq!(parse_version(ToolId::Node, "node is installed"), None);
         assert_eq!(parse_version(ToolId::Php, "PHP development build"), None);
         assert_eq!(parse_version(ToolId::Node, "build 2026"), None);
+    }
+
+    #[test]
+    fn ignores_unrelated_numeric_output_before_the_tool_version() {
+        assert_eq!(
+            parse_version(ToolId::Node, "build 2026\\nv22.23.4"),
+            Some("22.23.4".into())
+        );
+        assert_eq!(parse_version(ToolId::Node, "build 2026"), None);
+    }
+
+    #[test]
+    fn detection_status_preserves_missing_ambiguous_and_error_states() {
+        assert_eq!(detection_status(0, 0, false), "notFound");
+        assert_eq!(detection_status(0, 0, true), "inspectionError");
+        assert_eq!(detection_status(2, 0, false), "ambiguous");
+        assert_eq!(detection_status(1, 1, false), "detected");
+        assert_eq!(detection_status(1, 0, false), "inspectionError");
     }
 
     #[test]
@@ -720,6 +791,59 @@ mod tests {
         ];
         let output = run_bounded(&executable, &arguments).expect("start test helper");
         assert_eq!(output.exit_code, Some(7));
+    }
+
+    #[test]
+    fn missing_candidate_is_not_reported_as_a_discovery_error() {
+        let missing = std::env::temp_dir().join(format!(
+            "dem-missing-node-{}.exe",
+            std::process::id()
+        ));
+        let mut discovery = Discovery::default();
+
+        discovery.add(ToolId::Node, missing, None);
+
+        assert!(discovery.candidates.get(&ToolId::Node).is_none());
+        assert!(discovery.notes.get(&ToolId::Node).is_none());
+    }
+
+    #[test]
+    fn missing_configured_root_is_reported_as_incomplete() {
+        let missing = std::env::temp_dir().join(format!(
+            "dem-missing-root-{}",
+            std::process::id()
+        ));
+        let mut discovery = Discovery::default();
+
+        add_configured_root(&mut discovery, ToolId::Node, &missing, false);
+
+        assert!(discovery.candidates.get(&ToolId::Node).is_none());
+        assert!(!discovery.notes.get(&ToolId::Node).unwrap().is_empty());
+    }
+
+    #[test]
+    fn version_manager_root_scans_direct_children_without_using_root_executable() {
+        let root = std::env::temp_dir().join(format!(
+            "dem-nvm-root-{}",
+            std::process::id()
+        ));
+        let version_directory = root.join("v22.23.4");
+        fs::create_dir_all(&version_directory).expect("create version directory");
+        fs::write(root.join("node.exe"), b"root fixture").expect("create root fixture");
+        fs::write(version_directory.join("node.exe"), b"version fixture")
+            .expect("create version fixture");
+
+        let mut discovery = Discovery::default();
+        add_manager_root(&mut discovery, ToolId::Node, &root, true);
+
+        let candidates = discovery.candidates.get(&ToolId::Node).unwrap();
+        assert_eq!(candidates.len(), 1);
+        assert_eq!(
+            candidates[0].executable,
+            version_directory.join("node.exe").canonicalize().unwrap()
+        );
+
+        let _ = fs::remove_dir_all(root);
     }
 
     #[test]
