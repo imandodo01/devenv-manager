@@ -452,14 +452,18 @@ fn parse_version(tool: ToolId, output: &str) -> Option<String> {
         let value = match tool {
             ToolId::Node => line
                 .strip_prefix('v')
-                .filter(|value| value.starts_with(|character: char| character.is_ascii_digit())),
+                .filter(|value| value.chars().next().is_some_and(|character| character.is_ascii_digit())),
             ToolId::Php => line.strip_prefix("PHP "),
             ToolId::Java => {
                 if line.to_ascii_lowercase().contains("version") {
-                    let start = line.find('"')?;
-                    let quoted = &line[start + 1..];
-                    let end = quoted.find('"')?;
-                    return parse_version_token(&quoted[..end]);
+                    if let Some(start) = line.find('"') {
+                        let quoted = &line[start + 1..];
+                        if let Some(end) = quoted.find('"') {
+                            if let Some(version) = parse_version_token(&quoted[..end]) {
+                                return Some(version);
+                            }
+                        }
+                    }
                 }
                 None
             }
