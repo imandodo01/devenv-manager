@@ -1,6 +1,6 @@
 # M2 — Local Windows Verification
 
-**Branch:** `feature/m2-environment-inventory-implementation`  
+**Branch:** `feature/m2-environment-inventory-clean`  
 **Purpose:** Verify the read-only Environment inventory on the target Windows machine. Do not use this feature to change PATH or install/remove tools.
 
 ## 1. Prepare
@@ -10,10 +10,10 @@ From the repository root, first confirm there are no unrelated working-tree chan
 ```powershell
 git status --short --branch
 git fetch origin
-git switch --track origin/feature/m2-environment-inventory-implementation
+git switch --track origin/feature/m2-environment-inventory-clean
 ```
 
-If the local branch already exists, use `git switch feature/m2-environment-inventory-implementation` followed by `git pull --ff-only origin feature/m2-environment-inventory-implementation`.
+If the local branch already exists, use `git switch feature/m2-environment-inventory-clean` followed by `git pull --ff-only origin feature/m2-environment-inventory-clean`.
 
 Then activate the project's Node version and record the toolchain:
 
