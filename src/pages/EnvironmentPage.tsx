@@ -35,7 +35,7 @@ function ToolCard({ tool }: { tool: EnvironmentToolResult }) {
               key={installation.executablePath + (installation.artifactPath ?? "")}
             >
               <p className="text-sm font-medium text-slate-200">
-                {installation.version}
+                {installation.version ?? "Version unavailable"}
               </p>
               <p className="mt-1 break-all font-mono text-[11px] leading-5 text-slate-400">
                 {installation.executablePath}
