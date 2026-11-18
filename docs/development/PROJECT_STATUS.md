@@ -7,7 +7,7 @@
 
 ## Executive summary
 
-DEM has completed its foundation and application shell. M2's read-only environment inventory has been implemented, merged, and exercised on the user's Windows workstation. The frontend and Rust quality checks passed, and the native desktop app displayed live inventory data. M2's final acceptance remains open only for evidence that Process/User/Machine PATH values were unchanged and an explicit acceptance record.
+DEM has completed its foundation and application shell. M2's read-only environment inventory has been implemented, merged, and exercised on the user's Windows workstation. The frontend and Rust quality checks passed, and the native desktop app displayed live inventory data. M2's final acceptance remains open for independent executable/version comparison, evidence that Process/User/Machine PATH values were unchanged, and an explicit acceptance record.
 
 ## Milestone status
 
