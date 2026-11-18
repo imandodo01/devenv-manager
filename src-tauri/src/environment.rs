@@ -115,7 +115,10 @@ impl Discovery {
     fn add(&mut self, tool: ToolId, executable: PathBuf, artifact: Option<PathBuf>) {
         let canonical = match executable.canonicalize() {
             Ok(path) => path,
-            Err(error) if error.kind() == ErrorKind::NotFound => return,
+            Err(error) if error.kind() == ErrorKind::NotFound => {
+            discovery.note(tool, "A configured version-manager directory does not exist.");
+            return;
+        },
             Err(_) => {
                 self.note(
                     tool,
