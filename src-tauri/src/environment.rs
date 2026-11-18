@@ -170,6 +170,29 @@ fn has_expected_name(path: &Path, expected: &str) -> bool {
         .is_some_and(|name| name.eq_ignore_ascii_case(expected))
 }
 
+fn normalize_windows_process_path(value: &str) -> String {
+    if let Some(unc_path) = value.strip_prefix(r"\\?\UNC\") {
+        return format!(r"\\{unc_path}");
+    }
+    if let Some(local_path) = value.strip_prefix(r"\\?\") {
+        return local_path.to_string();
+    }
+    value.to_string()
+}
+
+fn process_path_argument(path: &Path) -> OsString {
+    #[cfg(windows)]
+    {
+        return OsString::from(normalize_windows_process_path(
+            &path.to_string_lossy(),
+        ));
+    }
+    #[cfg(not(windows))]
+    {
+        path.as_os_str().to_owned()
+    }
+}
+
 fn env_path(name: &str) -> Option<PathBuf> {
     env::var_os(name)
         .filter(|value| !value.is_empty())
@@ -297,6 +320,7 @@ fn add_manager_root(
 fn add_configured_root(
     discovery: &mut Discovery,
     tool: ToolId,
+    source: &str,
     root: &Path,
     nested_version_directories: bool,
 ) {
@@ -304,11 +328,14 @@ fn add_configured_root(
         Ok(metadata) if metadata.is_dir() => {
             add_manager_root(discovery, tool, root, nested_version_directories);
         }
-        Ok(_) => discovery.note(tool, "A configured tool path is not a directory."),
+        Ok(_) => discovery.note(
+            tool,
+            format!("Configured {source} path is not a directory."),
+        ),
         Err(error) if error.kind() == ErrorKind::NotFound => {
-            discovery.note(tool, "A configured tool directory does not exist.");
+            discovery.note(tool, format!("Configured {source} directory does not exist."));
         }
-        Err(_) => discovery.note(tool, "Could not inspect a configured tool directory."),
+        Err(_) => discovery.note(tool, format!("Could not inspect configured {source}.")),
     }
 }
 
@@ -317,20 +344,20 @@ fn discover() -> Discovery {
     add_path_candidates(&mut result);
 
     if let Some(root) = env_path("NVM_HOME") {
-        add_configured_root(&mut result, ToolId::Node, &root, true);
+        add_configured_root(&mut result, ToolId::Node, "NVM_HOME", &root, true);
     }
     if let Some(root) = env_path("NVM_SYMLINK") {
-        add_configured_root(&mut result, ToolId::Node, &root, false);
+        add_configured_root(&mut result, ToolId::Node, "NVM_SYMLINK", &root, false);
     }
     if let Some(root) = env_path("PHP_HOME") {
-        add_configured_root(&mut result, ToolId::Php, &root, false);
+        add_configured_root(&mut result, ToolId::Php, "PHP_HOME", &root, false);
     }
     if let Some(root) = env_path("JAVA_HOME") {
-        add_configured_root(&mut result, ToolId::Java, &root.join("bin"), false);
+        add_configured_root(&mut result, ToolId::Java, "JAVA_HOME", &root.join("bin"), false);
     }
     if let Some(root) = env_path("CARGO_HOME") {
-        add_configured_root(&mut result, ToolId::Rustc, &root.join("bin"), false);
-        add_configured_root(&mut result, ToolId::Cargo, &root.join("bin"), false);
+        add_configured_root(&mut result, ToolId::Rustc, "CARGO_HOME", &root.join("bin"), false);
+        add_configured_root(&mut result, ToolId::Cargo, "CARGO_HOME", &root.join("bin"), false);
     }
     if let Some(root) = env_path("USERPROFILE").map(|path| path.join(".cargo").join("bin")) {
         add_manager_root(&mut result, ToolId::Rustc, &root, false);
@@ -540,7 +567,7 @@ fn inspect_candidate(
         (
             php.to_path_buf(),
             vec![
-                artifact.as_os_str().to_owned(),
+                process_path_argument(artifact),
                 OsString::from("--no-plugins"),
                 OsString::from("--no-scripts"),
                 OsString::from("--version"),
@@ -558,7 +585,10 @@ fn inspect_candidate(
         return Err("Version command exceeded the 3-second time limit.".to_string());
     }
     if output.exit_code != Some(0) {
-        return Err("Version command returned a non-zero or unavailable exit code.".to_string());
+        return Err(format!(
+            "Version command returned a non-zero or unavailable exit code ({:?}).",
+            output.exit_code
+        ));
     }
 
     let stdout = String::from_utf8_lossy(&output.stdout);
@@ -761,6 +791,22 @@ mod tests {
     use super::*;
 
     #[test]
+    fn normalizes_extended_windows_paths_for_script_arguments() {
+        assert_eq!(
+            normalize_windows_process_path(r"\\?\C:\Tools\composer.phar"),
+            r"C:\Tools\composer.phar"
+        );
+        assert_eq!(
+            normalize_windows_process_path(r"\\?\UNC\server\share\composer.phar"),
+            r"\\server\share\composer.phar"
+        );
+        assert_eq!(
+            normalize_windows_process_path(r"C:\Tools\composer.phar"),
+            r"C:\Tools\composer.phar"
+        );
+    }
+
+    #[test]
     fn parses_supported_version_output_without_guessing() {
         assert_eq!(
             parse_version(ToolId::Node, "v22.23.4"),
@@ -887,10 +933,13 @@ mod tests {
         let missing = std::env::temp_dir().join(format!("dem-missing-root-{}", std::process::id()));
         let mut discovery = Discovery::default();
 
-        add_configured_root(&mut discovery, ToolId::Node, &missing, false);
+        add_configured_root(&mut discovery, ToolId::Node, "NVM_HOME", &missing, false);
 
         assert!(!discovery.candidates.contains_key(&ToolId::Node));
-        assert!(!discovery.notes.get(&ToolId::Node).unwrap().is_empty());
+        assert_eq!(
+            discovery.notes.get(&ToolId::Node).unwrap(),
+            &["Configured NVM_HOME directory does not exist."]
+        );
     }
 
     #[test]
