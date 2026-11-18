@@ -98,6 +98,28 @@ After scanning, run:
 
 All three values must be `True`. Also confirm no installation, file, or environment configuration was changed.
 
-## 7. Report
+## 7. Recorded verification — 2026-11-19
+
+The following results were supplied from the user's Windows 11 workstation after PR #12 was updated:
+
+| Check | Result |
+|---|---|
+| Frontend lint | Passed |
+| Frontend typecheck | Passed |
+| Frontend tests | 8 passed across 3 files |
+| Frontend production build | Passed |
+| Rust formatting check | Passed after a follow-up formatting correction |
+| Rust tests | 17 passed, 0 failed, 2 ignored |
+| Rust Clippy with warnings denied | Passed |
+| Native Tauri development launch | Passed; application opened |
+| Visual inventory review | Passed; seven entries displayed, multiple candidates retained, refresh completed |
+| Independent command/path comparison | Not recorded |
+| Process/User/Machine PATH before/after equality | Not recorded; remains an acceptance check |
+
+Observed workstation results included Node.js 22.23.4, PHP 8.1.10, Java 1.8.0_441 and 17.0.21, two Rust compiler and Cargo candidates, four Git executable paths, and two Composer PHAR/PHP combinations. Node.js also displayed incomplete-inspection notes for configured but nonexistent NVM roots. This is not evidence that NVM is installed or required.
+
+The repository was subsequently switched to `main`, fast-forwarded from `origin/main`, and reported clean with `git status --short --branch`.
+
+## 8. Report
 
 Record pass/fail for each supported tool, unexpected output, duplicate installations, and any custom install locations not discovered. “Not found” means not found in the approved bounded sources; it does not prove absence from the whole computer. Redact usernames or sensitive path segments before sharing screenshots/logs.
