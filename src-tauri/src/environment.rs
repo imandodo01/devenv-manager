@@ -199,7 +199,8 @@ fn add_manager_root(
         }
     };
 
-    for (index, entry) in entries.take(MAX_CHILD_DIRECTORIES).enumerate() {
+    let entries: Vec<_> = entries.take(MAX_CHILD_DIRECTORIES + 1).collect();
+    for entry in entries.iter().take(MAX_CHILD_DIRECTORIES) {
         let Ok(entry) = entry else {
             discovery.note(tool, "A version-manager directory entry could not be read.");
             continue;
@@ -211,9 +212,9 @@ fn add_manager_root(
         if file_type.is_dir() {
             discovery.add(tool, entry.path().join(tool.executable_name()), None);
         }
-        if index + 1 == MAX_CHILD_DIRECTORIES {
-            discovery.note(tool, "Version-manager directory limit reached; remaining entries were not inspected.");
-        }
+    }
+    if entries.len() > MAX_CHILD_DIRECTORIES {
+        discovery.note(tool, "Version-manager directory limit reached; remaining entries were not inspected.");
     }
 }
 
@@ -250,15 +251,16 @@ fn discover() -> Discovery {
         let java_root = program_files.join("Java");
         match fs::read_dir(&java_root) {
             Ok(entries) => {
-                for (index, entry) in entries.take(MAX_CHILD_DIRECTORIES).enumerate() {
+                let entries: Vec<_> = entries.take(MAX_CHILD_DIRECTORIES + 1).collect();
+                for entry in entries.iter().take(MAX_CHILD_DIRECTORIES) {
                     if let Ok(entry) = entry {
                         if entry.file_type().is_ok_and(|kind| kind.is_dir()) {
                             add_manager_root(&mut result, ToolId::Java, &entry.path().join("bin"), false);
                         }
                     }
-                    if index + 1 == MAX_CHILD_DIRECTORIES {
-                        result.note(ToolId::Java, "Java installation directory limit reached.");
-                    }
+                }
+                if entries.len() > MAX_CHILD_DIRECTORIES {
+                    result.note(ToolId::Java, "Java installation directory limit reached.");
                 }
             }
             Err(error) if error.kind() == ErrorKind::NotFound => {}
@@ -496,7 +498,7 @@ fn inspect_tool(tool: ToolId, discovery: &Discovery, php_count: usize, php_path:
         label: tool.label(),
         status,
         installations,
-        incomplete: incomplete || notes.len() > 0,
+        incomplete: incomplete || !notes.is_empty(),
         notes,
     }
 }
