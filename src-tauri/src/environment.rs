@@ -113,10 +113,16 @@ impl Discovery {
     }
 
     fn add(&mut self, tool: ToolId, executable: PathBuf, artifact: Option<PathBuf>) {
-        let Ok(canonical) = executable.canonicalize() else {
-            return;
+        let canonical = match executable.canonicalize() {
+            Ok(path) => path,
+            Err(error) if error.kind() == ErrorKind::NotFound => return,
+            Err(_) => {
+                self.note(tool, "A candidate executable path could not be accessed or canonicalized.");
+                return;
+            }
         };
         if !canonical.is_file() || !has_expected_name(&canonical, tool.executable_name()) {
+            self.note(tool, "A candidate path failed executable-file validation.");
             return;
         }
 
@@ -625,6 +631,25 @@ mod tests {
         discovery.add(ToolId::Node, executable.clone(), None);
 
         assert_eq!(discovery.candidates.get(&ToolId::Node).map(Vec::len), Some(1));
+        let _ = fs::remove_file(executable);
+        let _ = fs::remove_dir(directory);
+    }
+
+    #[test]
+    fn invalid_candidate_filename_is_reported_as_incomplete() {
+        let directory = std::env::temp_dir().join(format!(
+            "dem-m2-invalid-candidate-{}",
+            std::process::id()
+        ));
+        fs::create_dir_all(&directory).expect("create test directory");
+        let executable = directory.join("not-node.exe");
+        fs::write(&executable, b"test fixture").expect("create fixture");
+
+        let mut discovery = Discovery::default();
+        discovery.add(ToolId::Node, executable.clone(), None);
+
+        assert!(discovery.candidates.get(&ToolId::Node).is_none());
+        assert!(!discovery.notes.get(&ToolId::Node).unwrap().is_empty());
         let _ = fs::remove_file(executable);
         let _ = fs::remove_dir(directory);
     }
