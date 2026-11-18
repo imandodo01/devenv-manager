@@ -14,6 +14,6 @@ For each PR, list exact commands, outcomes, environment, and checks not run. Dis
 
 ## M2 environment inventory
 
-- Rust unit tests cover supported version output parsing, unrecognized output, executable-name validation, and bounded output retention.
+- Rust unit tests cover supported version output parsing, unrecognized output, executable-name validation, canonical-path deduplication, bounded output retention, process start failure, non-zero exit, and timeout termination.
 - Frontend presentation tests cover detected, not-found, ambiguous, inspection-error, loading, and command-error states.
 - Windows local verification remains mandatory for real PATH and installation discovery; remote/static review cannot establish the user's installed tool inventory.
