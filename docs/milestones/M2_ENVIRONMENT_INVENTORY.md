@@ -1,6 +1,6 @@
 # M2 — Environment Inventory & Runtime Detection
 
-**Development:** In Progress | **Test Preparation:** Ready | **Acceptance:** Pending  
+**Development:** Completed (merged 2026-11-19) | **Test Preparation:** Ready | **Acceptance:** Pending final read-only verification and explicit sign-off  
 **Issue:** [#11 — Implement read-only environment inventory](https://github.com/imandodo01/devenv-manager/issues/11)  
 **Planning decision:** [PR #5 — approved support matrix and detection policy](https://github.com/imandodo01/devenv-manager/pull/5)
 **Dependency:** M0 and M1 accepted
@@ -111,17 +111,17 @@ Do not collapse missing, ambiguous, and error into an empty list or a generic fa
 
 - [x] Initial supported tool/runtime matrix is documented and approved.
 - [x] Detection-source policy and limits are reviewed and approved.
-- [ ] Detection result contract is typed, documented, and distinguishes detected, missing, ambiguous, and error.
-- [ ] Multiple installations are retained; no arbitrary default is implied.
-- [ ] Discovery is read-only, bounded, deterministic, and limited to approved sources.
-- [ ] Executable paths are validated before metadata retrieval.
-- [ ] Version retrieval handles malformed output, process errors, timeout, and access failures.
-- [ ] Environment UI shows real detected data and honest unavailable/ambiguous/error states.
-- [ ] Tests cover found, missing, duplicate/ambiguous, invalid path, malformed output, process failure, timeout, and permission/error cases as applicable.
-- [ ] Lint, typecheck, frontend tests/build, and relevant Cargo checks pass.
-- [ ] Windows local verification confirms expected detections and no environment configuration changes.
-- [ ] Product docs, test strategy, and acceptance register are updated.
-- [ ] User acceptance is recorded before merge.
+- [x] Detection result contract is typed and distinguishes detected, missing, ambiguous, and inspection-error states.
+- [x] Multiple installations are retained; no arbitrary default is implied.
+- [x] Discovery is read-only, bounded, deterministic, and limited to approved sources (implementation and tests reviewed).
+- [x] Executable paths are validated before metadata retrieval.
+- [x] Version retrieval handles malformed output, process errors, timeout, and access failures in automated coverage.
+- [x] Environment UI shows real detected data and honest unavailable/ambiguous/error states (Windows screenshots reviewed).
+- [x] Tests cover found, missing, duplicate/ambiguous, invalid path, malformed output, process failure, timeout, and relevant error cases.
+- [x] Lint, typecheck, frontend tests/build, formatting, Cargo tests, and Clippy pass on the user's Windows machine.
+- [ ] Final Windows read-only check confirms Process/User/Machine PATH values are unchanged; visual detection was verified, but before/after PATH evidence was not recorded.
+- [x] Product docs, test strategy, and acceptance register are updated.
+- [ ] Explicit user acceptance is recorded (implementation has already been merged with the user's merge authorization).
 
 ## Verification plan
 
@@ -151,3 +151,34 @@ These activities must not introduce competing runtime types, start environment m
 ## Estimate
 
 5–7 focused person-hours baseline, including discovery, implementation, tests, documentation, and review. Re-estimate if implementation reveals additional Windows-specific complexity.
+
+
+## Implementation and verification record — 2026-11-19
+
+**Delivery**
+- PR [#12](https://github.com/imandodo01/devenv-manager/pull/12) was merged to `main` with squash merge.
+- Merge commit: `f2d53e2e9c1027f95fdfee074be5a26eb32ed44b`.
+- Superseded PR #11 was closed; implementation issue #11 was closed by the merged PR.
+- Local repository was synchronized to `main`; the user's final `git status --short --branch` showed `## main...origin/main` with no working-tree changes.
+
+**Automated checks run by the user on Windows**
+| Check | Result |
+|---|---|
+| `npm run lint` | Passed |
+| `npm run typecheck` | Passed |
+| `npm test` | 3 files, 8 tests passed |
+| `npm run build` | Passed |
+| `cargo fmt --manifest-path src-tauri/Cargo.toml --all -- --check` | Passed after the formatting follow-up |
+| `cargo test --manifest-path src-tauri/Cargo.toml` | 17 passed, 0 failed, 2 ignored |
+| `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings` | Passed |
+
+**Windows application verification**
+- `npm run tauri dev` launched the native desktop application successfully.
+- Screenshots show all seven inventory entries and multiple installations retained for Java, Rust compiler, Cargo, Git, and Composer.
+- Node.js 22.23.4 and PHP 8.1.10 were detected; Java 8 and 17 were shown; Rust compiler/Cargo each showed two candidates; Git showed four paths; Composer showed two PHP/PHAR combinations.
+- Scan again completed and the Overview changed Environment inventory to Ready to use.
+- Node.js was displayed as detected but with incomplete inspection notes because configured `NVM_HOME` and `NVM_SYMLINK` directories do not exist on this workstation. This is visible and honest diagnostic behavior, but should be reviewed later if the user does not intend to configure NVM.
+- No evidence was supplied for independent executable/version comparison using `Get-Command`, or before/after Process/User/Machine PATH equality. Do not mark those checks passed.
+
+**Remaining acceptance gate**
+Run the read-only comparison in section 6 of [M2_LOCAL_VERIFICATION.md](../testing/M2_LOCAL_VERIFICATION.md), or explicitly defer it with rationale, then record user acceptance. No PATH or environment mutation is part of this step.
