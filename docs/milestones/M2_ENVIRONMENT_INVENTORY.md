@@ -99,8 +99,8 @@ Do not collapse missing, ambiguous, and error into an empty list or a generic fa
 
 - Read-only inspection only.
 - Bounded paths and bounded work; no unbounded whole-disk search.
-- Canonicalize and validate candidate paths before metadata retrieval.
-- Only execute validated executable files with fixed argument lists; no shell interpolation or wrapper execution.
+- Canonicalize candidate paths and require the expected executable/PHAR filename before metadata retrieval. This is path validation, not publisher-signature or binary-integrity verification.
+- Execute only the validated absolute candidate path with fixed argument lists; no shell interpolation or wrapper execution. Version inspection still executes local binaries, so users should keep their PATH and configured tool roots trusted.
 - Enforce timeout and bounded stdout/stderr; kill a timed-out child process.
 - Treat process exit code and parsed version as separate evidence.
 - Never change PATH or other machine configuration.
