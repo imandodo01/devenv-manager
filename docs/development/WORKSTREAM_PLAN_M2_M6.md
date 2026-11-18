@@ -1,6 +1,6 @@
 # DEM — Parallel Workstream Plan (M2–M6)
 
-**Status:** Planning baseline — pending user review  
+**Status:** Updated execution baseline — 2026-11-19  
 **Prepared:** 2026-11-17  
 **Base:** `main` after M1 acceptance and the M2 planning decision in PR #5  
 **Purpose:** Enable useful parallel preparation and implementation without allowing unstable contracts or Windows-only verification to become integration risks.
@@ -214,31 +214,9 @@ Any change to a shared public type must be proposed in its owning issue/PR and c
 - Confidence: Medium-low. M3–M6 estimates are ticket baselines; M5 has unresolved input-scope risk and M4 has Windows permission/rollback risk.
 - At an assumed 2–3 focused hours per working session, this is roughly 6–13 sessions. Calendar duration depends on available evenings/weekends and review/verification gaps; this is not a delivery date.
 
-## 10. Previous next-session checklist (historical)
+## 10. Previous M2 preparation checklist — superseded
 
-1. Confirm local repository is on a clean working tree before switching branches.
-2. Synchronize M1-accepted `main`:
-   ```powershell
-   git fetch origin
-   git switch main
-   git pull --ff-only origin main
-   git status --short --branch
-   ```
-3. Confirm expected toolchain:
-   ```powershell
-   nodeuse 22
-   node --version
-   npm --version
-   rustc --version
-   cargo --version
-   ```
-4. Start only the M2 ticket branch after `main` is synchronized.
-5. Work on M2 support-matrix audit, contract, bounded discovery design, automated tests, and Environment UI integration.
-6. In parallel, prepare M5 metadata inventory/fixtures and M4 safety cases as documentation/test-design work only; do not implement against unstable contracts.
-7. Run available lint/typecheck/tests/build/Cargo checks and record exact outcomes. Do not claim Windows local acceptance until the user runs the prescribed verification on the designated machine.
-8. At home, verify the M2 branch on Windows using the ticket-specific guide; report evidence/failures before merge.
-
-If the working tree is not clean or the expected branch state differs, stop and inspect rather than resetting or discarding changes.
+The original M2 preparation checklist has been superseded by the 2026-11-19 execution baseline and handoff in [PROJECT_STATUS.md](PROJECT_STATUS.md). Keep this plan focused on milestone dependencies and scope; use the project status record for the current next action and estimate.
 
 ## 10. Definition of Ready / Done
 
