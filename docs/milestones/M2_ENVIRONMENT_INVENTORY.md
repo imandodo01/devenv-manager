@@ -1,6 +1,6 @@
 # M2 — Environment Inventory & Runtime Detection
 
-**Development:** Not Started | **Test Preparation:** Ready for implementation review | **Acceptance:** Pending  
+**Development:** In Progress | **Test Preparation:** Ready | **Acceptance:** Pending  
 **Issue:** [#5 — Environment Inventory & Runtime Detection](https://github.com/imandodo01/devenv-manager/issues/5)  
 **Dependency:** M0 and M1 accepted
 
@@ -23,32 +23,32 @@ The initial M2 matrix is accepted:
 
 Python is deferred to a later phase. Git and Composer are development tools, not runtimes. Rust is one supported toolchain with two independently reported executables.
 
-## Proposed detection-source policy — pending review
+## Approved detection-source policy
 
-The implementation proposal is intentionally conservative and best-effort. It does not promise discovery of every custom installation.
+This policy was reviewed and approved on 2026-11-18. Detection remains intentionally conservative and best-effort; it does not promise discovery of every custom installation.
 
 1. Inspect direct executable candidates in the current process `PATH` entries. Do not invoke `where.exe` or a shell to resolve commands.
 2. Inspect explicit tool/manager roots when present:
    - Node.js: `NVM_HOME` and `NVM_SYMLINK`.
    - PHP: `PHP_HOME`.
    - Java: `JAVA_HOME`.
-   - Rust: `CARGO_HOME` and `%USERPROFILE%\\.cargo`.
+   - Rust: `CARGO_HOME` and ``%USERPROFILE%\\.cargo``.
 3. Inspect a small set of conventional Windows locations:
-   - `%ProgramFiles%\\nodejs`, `%ProgramFiles%\\PHP`, `%ProgramFiles%\\Git`.
-   - Direct child JDK directories under `%ProgramFiles%\\Java`.
-   - `%ProgramData%\\ComposerSetup\\bin\\composer.phar`.
+   - ``%ProgramFiles%\\nodejs``, ``%ProgramFiles%\\PHP``, ``%ProgramFiles%\\Git``.
+   - Direct child JDK directories under ``%ProgramFiles%\\Java``.
+   - ``%ProgramData%\\ComposerSetup\\bin\\composer.phar``.
 4. For version-manager roots that contain version directories, inspect direct child directories only. Do not recurse into arbitrary subdirectories.
 5. Composer is discovered as a PHAR file. Read and execute it only through one unambiguous validated `php.exe` candidate with fixed arguments. Never execute `.bat` or `.cmd` wrappers.
 6. Do not inspect the Windows registry, scan whole drives, query network catalogs, or transmit local inventory.
 
-Proposed hard limits:
+Approved hard limits:
 - At most 64 current `PATH` entries.
 - At most 32 direct child directories per version-manager root.
 - At most 8 retained candidates per tool.
 - A 3-second timeout per version command.
 - At most 8 KiB retained from each of stdout and stderr; continue draining streams after the retained limit is reached.
 
-The source policy and limits are proposals until reviewed. Any additional source (registry, another version manager, recursive search, network service) requires a separate scope decision.
+Any additional source (registry, another version manager, recursive search, network service) requires a separate scope decision.
 
 ## Fixed version commands
 
@@ -60,7 +60,7 @@ The source policy and limits are proposals until reviewed. Any additional source
 | Rust compiler | Validated `rustc.exe` | `--version` |
 | Cargo | Validated `cargo.exe` | `--version` |
 | Git | Validated `git.exe` | `--version` |
-| Composer | Validated `php.exe` + discovered `composer.phar` | `<composer.phar path> --version` |
+| Composer | Validated `php.exe` + discovered `composer.phar` | `<composer.phar path> --no-plugins --no-scripts --version` |
 
 No shell interpolation is used. Process exit status and parsed version are separate evidence. Unexpected output remains unknown; it must not be guessed.
 
@@ -109,7 +109,7 @@ Do not collapse missing, ambiguous, and error into an empty list or a generic fa
 ## Acceptance criteria
 
 - [x] Initial supported tool/runtime matrix is documented and approved.
-- [ ] Detection-source policy and limits are reviewed and approved.
+- [x] Detection-source policy and limits are reviewed and approved.
 - [ ] Detection result contract is typed, documented, and distinguishes detected, missing, ambiguous, and error.
 - [ ] Multiple installations are retained; no arbitrary default is implied.
 - [ ] Discovery is read-only, bounded, deterministic, and limited to approved sources.
@@ -149,4 +149,4 @@ These activities must not introduce competing runtime types, start environment m
 
 ## Estimate
 
-5–7 focused person-hours baseline, including discovery, implementation, tests, documentation, and review. Re-estimate after the detection-source policy is accepted and code structure is inspected.
+5–7 focused person-hours baseline, including discovery, implementation, tests, documentation, and review. Re-estimate if implementation reveals additional Windows-specific complexity.
