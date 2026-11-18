@@ -224,7 +224,12 @@ fn add_path_candidates(discovery: &mut Discovery) {
     }
     if path_entries.len() > MAX_PATH_ENTRIES {
         for tool in [
-            ToolId::Node, ToolId::Php, ToolId::Java, ToolId::Rustc, ToolId::Cargo, ToolId::Git,
+            ToolId::Node,
+            ToolId::Php,
+            ToolId::Java,
+            ToolId::Rustc,
+            ToolId::Cargo,
+            ToolId::Git,
             ToolId::Composer,
         ] {
             discovery.note(
@@ -464,10 +469,13 @@ fn run_bounded(executable: &Path, arguments: &[OsString]) -> Result<CommandOutpu
 
 fn parse_version_token(value: &str) -> Option<String> {
     let token = value.split_whitespace().next()?;
-    let candidate = token.trim_matches(|character: char| {
-        !character.is_ascii_alphanumeric() && !matches!(character, '.' | '+' | '-' | '_')
-    });
-    let has_digit = candidate.chars().any(|character| character.is_ascii_digit());
+    let candidate = token
+        .trim_matches(|character: char| {
+            !character.is_ascii_alphanumeric() && !matches!(character, '.' | '+' | '-' | '_')
+        });
+    let has_digit = candidate
+        .chars()
+        .any(|character| character.is_ascii_digit());
     let valid = !candidate.is_empty()
         && has_digit
         && candidate.chars().all(|character| {
@@ -529,12 +537,15 @@ fn inspect_candidate(
             "Composer requires exactly one validated PHP installation.".to_string()
         })?;
         let artifact = candidate.artifact.as_ref().unwrap_or(&candidate.executable);
-        (php.to_path_buf(), vec![
-            artifact.as_os_str().to_owned(),
-            OsString::from("--no-plugins"),
-            OsString::from("--no-scripts"),
-            OsString::from("--version"),
-        ])
+        (
+            php.to_path_buf(),
+            vec![
+                artifact.as_os_str().to_owned(),
+                OsString::from("--no-plugins"),
+                OsString::from("--no-scripts"),
+                OsString::from("--version"),
+            ],
+        )
     } else {
         (
             candidate.executable.clone(),
@@ -576,7 +587,10 @@ fn inspect_candidate(
                     .into_owned(),
             )
         } else {
-            candidate.artifact.as_ref().map(|path| path.to_string_lossy().into_owned())
+            candidate
+                .artifact
+                .as_ref()
+                .map(|path| path.to_string_lossy().into_owned())
         },
         version: Some(version),
     })
@@ -712,14 +726,22 @@ fn inspect_tool(
 pub fn collect_inventory() -> InventorySnapshot {
     let discovery = discover();
 
-    let php_candidates = discovery.candidates.get(&ToolId::Php).cloned().unwrap_or_default();
-    let php_path = (php_candidates.len() == 1)
-        .then(|| php_candidates[0].executable.clone());
+    let php_candidates = discovery
+        .candidates
+        .get(&ToolId::Php)
+        .cloned()
+        .unwrap_or_default();
+    let php_path = (php_candidates.len() == 1).then(|| php_candidates[0].executable.clone());
     let php_count = php_candidates.len();
 
     let tools = [
-        ToolId::Node, ToolId::Php, ToolId::Java, ToolId::Rustc,
-        ToolId::Cargo, ToolId::Git, ToolId::Composer,
+        ToolId::Node,
+        ToolId::Php,
+        ToolId::Java,
+        ToolId::Rustc,
+        ToolId::Cargo,
+        ToolId::Git,
+        ToolId::Composer,
     ]
     .into_iter()
     .map(|tool| inspect_tool(tool, &discovery, php_count, php_path.as_deref()))
@@ -741,8 +763,14 @@ mod tests {
 
     #[test]
     fn parses_supported_version_output_without_guessing() {
-        assert_eq!(parse_version(ToolId::Node, "v22.23.4"), Some("22.23.4".into()));
-        assert_eq!(parse_version(ToolId::Php, "PHP 8.3.14 (cli)"), Some("8.3.14".into()));
+        assert_eq!(
+            parse_version(ToolId::Node, "v22.23.4"),
+            Some("22.23.4".into())
+        );
+        assert_eq!(
+            parse_version(ToolId::Php, "PHP 8.3.14 (cli)"),
+            Some("8.3.14".into())
+        );
         assert_eq!(
             parse_version(ToolId::Git, "git version 2.45.1.windows.1"),
             Some("2.45.1.windows.1".into())
