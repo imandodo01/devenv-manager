@@ -28,4 +28,4 @@ Development completion does not imply acceptance. Milestone acceptance requires 
 
 ## Estimates
 
-Earlier estimates (M0 3–5h; feature work roughly 26–38h) are rough planning references, not commitments. The current M2–M6 planning estimate is 22–32h; revise after the M2 technical audit and scope decisions.
+Earlier estimates (M0 3–5h; feature work roughly 26–38h) are rough planning references, not commitments. The original M2–M6 baseline was 22–32h. Following M2 delivery, the current remaining M3–M6 estimate is 17–25h, plus 0.25–0.5h for M2 closeout; see [Project Status](../development/PROJECT_STATUS.md). This excludes separately scoped Repository Inventory work and release packaging/signing.
