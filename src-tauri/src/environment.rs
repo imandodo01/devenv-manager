@@ -170,6 +170,7 @@ fn has_expected_name(path: &Path, expected: &str) -> bool {
         .is_some_and(|name| name.eq_ignore_ascii_case(expected))
 }
 
+#[cfg(any(windows, test))]
 fn normalize_windows_process_path(value: &str) -> String {
     if let Some(unc_path) = value.strip_prefix(r"\\?\UNC\") {
         return format!(r"\\{unc_path}");
@@ -183,9 +184,9 @@ fn normalize_windows_process_path(value: &str) -> String {
 fn process_path_argument(path: &Path) -> OsString {
     #[cfg(windows)]
     {
-        return OsString::from(normalize_windows_process_path(
+        OsString::from(normalize_windows_process_path(
             &path.to_string_lossy(),
-        ));
+        ))
     }
     #[cfg(not(windows))]
     {
