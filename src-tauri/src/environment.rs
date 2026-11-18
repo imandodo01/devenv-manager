@@ -239,7 +239,10 @@ fn add_manager_root(
 
     let entries = match fs::read_dir(root) {
         Ok(entries) => entries,
-        Err(error) if error.kind() == ErrorKind::NotFound => return,
+        Err(error) if error.kind() == ErrorKind::NotFound => {
+            discovery.note(tool, "A configured version-manager directory does not exist.");
+            return;
+        },
         Err(_) => {
             discovery.note(tool, "Could not inspect a configured tool directory.");
             return;
