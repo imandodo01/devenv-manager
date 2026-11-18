@@ -137,7 +137,7 @@ export function EnvironmentContent({
       <p className="text-xs leading-5 text-slate-600">
         Detection is best-effort and limited to documented sources. “Not found”
         does not prove that a tool is absent from the entire computer. Version
-        commands are run with fixed arguments and bounded execution time.
+        commands execute local binaries with fixed arguments and bounded execution time. Keep your PATH and configured tool roots trusted.
       </p>
     </section>
   );
