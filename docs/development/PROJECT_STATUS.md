@@ -97,5 +97,5 @@ The Product Specification includes Repository Inventory (discover/register repos
 ## Git and verification notes
 
 - No local files were changed by the user's final synchronization; working tree was clean.
-- Documentation updates are being prepared on a separate documentation branch and must be reviewed/merged before becoming part of `main`.
+- This handoff is the current repository record for milestone status and should be updated when new verification evidence, decisions, or estimates are recorded.
 - No Actions workflow/status checks are configured in the repository; the M2 test results above are user-run local Windows evidence, not CI results.
