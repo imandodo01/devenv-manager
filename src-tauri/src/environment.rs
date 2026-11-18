@@ -304,7 +304,10 @@ fn discover() -> Discovery {
                 let entries: Vec<_> = entries.take(MAX_CHILD_DIRECTORIES + 1).collect();
                 for entry in entries.iter().take(MAX_CHILD_DIRECTORIES) {
                     let Ok(entry) = entry else {
-                        result.note(ToolId::Java, "A Java installation directory entry could not be read.");
+                        result.note(
+                            ToolId::Java,
+                            "A Java installation directory entry could not be read.",
+                        );
                         continue;
                     };
                     match entry.file_type() {
