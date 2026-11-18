@@ -59,7 +59,8 @@ Get-Command node.exe, php.exe, java.exe, rustc.exe, cargo.exe, git.exe -All -Err
 Run the matching fixed version command for each installed executable. For Composer, verify the displayed PHAR path and PHP runner; compare against:
 
 ```powershell
-php.exe <path-to-composer.phar> --no-plugins --no-scripts --version
+$composerPhar = "C:\\path\\to\\composer.phar"
+php.exe $composerPhar --no-plugins --no-scripts --version
 ```
 
 For custom installations not listed by `Get-Command`, compare the exact executable path shown in DEM directly. Do not paste full PATH or unrelated environment-variable values into evidence.
