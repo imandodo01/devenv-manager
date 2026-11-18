@@ -16,4 +16,5 @@ This register describes expected behavior and records acceptance outcomes. Add c
 | AT-010 | Compatibility | Satisfied, missing, incompatible, and unknown states distinguished | Unit + integration | Not Prepared |
 | AT-011 | Repository | Existing, Planned, Pending Setup, Archived remain distinguishable and user-controlled | UI + integration | Not Prepared |
 | AT-012 | M1 | Application shell, primary navigation, honest placeholder states, and responsive layout work | Automated + Windows manual | Passed — 2026-11-17 |
+| AT-013 | M2 | Supported tools are detected from approved sources with accurate versions/paths and distinct missing, ambiguous, and inspection-error states; scanning is read-only | Rust + frontend tests + Windows manual | In Progress |
 

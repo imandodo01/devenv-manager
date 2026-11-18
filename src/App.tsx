@@ -4,6 +4,7 @@ import PageHeader from "./components/PageHeader";
 import { initialPage, navigationReducer } from "./app/navigation";
 import OverviewPage from "./pages/OverviewPage";
 import PlaceholderPage from "./pages/PlaceholderPage";
+import EnvironmentPage from "./pages/EnvironmentPage";
 
 function App() {
   const [activePage, navigate] = useReducer(navigationReducer, initialPage);
@@ -21,13 +22,15 @@ function App() {
           <div className="flex-1">
             {activePage === "overview" ? (
               <OverviewPage />
+            ) : activePage === "environment" ? (
+              <EnvironmentPage />
             ) : (
               <PlaceholderPage pageId={activePage} />
             )}
           </div>
           <footer className="mt-10 flex flex-wrap items-center justify-between gap-2 border-t border-slate-800/70 pt-4 text-[10px] font-medium uppercase tracking-[0.16em] text-slate-600">
             <span>DevEnv Manager</span>
-            <span>Local desktop workspace · M1</span>
+            <span>Local desktop workspace · M2</span>
           </footer>
         </main>
       </div>
