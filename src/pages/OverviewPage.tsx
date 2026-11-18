@@ -4,18 +4,21 @@ import StatusBadge from "../components/StatusBadge";
 const summaries = [
   {
     title: "Environment inventory",
-    description: "Tool and runtime detection is planned for M2.",
+    description: "Read-only inventory and runtime detection are available in M2.",
     marker: "EN",
+    status: "Available",
   },
   {
     title: "Repositories",
     description: "Repository discovery and registration are planned for a later milestone.",
     marker: "RE",
+    status: "Planned",
   },
   {
     title: "Requirements",
     description: "Project requirement inspection is not implemented yet.",
     marker: "RQ",
+    status: "Planned",
   },
 ];
 
@@ -41,8 +44,8 @@ function OverviewPage() {
           </h2>
           <p className="mt-4 max-w-xl text-sm leading-7 text-slate-400">
             DevEnv Manager is being built to help you understand your local tools,
-            runtimes, and project requirements. The application shell is ready; environment
-            data will appear as those capabilities are implemented.
+            runtimes, and project requirements. The application shell and read-only
+            environment inventory are available; more capabilities will arrive in later milestones.
           </p>
         </div>
       </section>
@@ -69,7 +72,7 @@ function OverviewPage() {
               key={item.title}
               marker={item.marker}
               title={item.title}
-              status="Planned"
+              status={item.status}
               description={item.description}
             />
           ))}
@@ -81,10 +84,10 @@ function OverviewPage() {
           <div>
             <h2 className="text-sm font-semibold text-slate-200">What happens next</h2>
             <p className="mt-1 text-xs leading-5 text-slate-500">
-              The next milestone introduces read-only environment inventory and runtime detection.
+              M2 provides read-only environment inventory. Next, M3 will add runtime metadata and installed-version details.
             </p>
           </div>
-          <StatusBadge tone="info">M2 · Environment inventory</StatusBadge>
+          <StatusBadge tone="info">M3 · Runtime information</StatusBadge>
         </div>
       </section>
     </div>

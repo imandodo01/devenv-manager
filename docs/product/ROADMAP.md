@@ -1,6 +1,6 @@
 # DEM Roadmap
 
-**Status:** M0 and M1 accepted on 2026-11-17. M2 is the next milestone.
+**Status:** M0 and M1 accepted on 2026-11-17. M2 implementation is in progress; acceptance remains pending.
 
 | Milestone | Focus | Exit outcome | Dependency |
 |---|---|---|---|
