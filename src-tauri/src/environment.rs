@@ -70,7 +70,7 @@ impl ToolId {
 pub struct Installation {
     pub executable_path: String,
     pub artifact_path: Option<String>,
-    pub version: String,
+    pub version: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -299,7 +299,13 @@ struct CommandOutput {
 }
 
 fn run_bounded(executable: &Path, arguments: &[OsString]) -> Result<CommandOutput, String> {
-    let mut child = Command::new(executable)
+    let mut command = Command::new(executable);
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        command.creation_flags(0x08000000);
+    }
+    let mut child = command
         .args(arguments)
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
@@ -415,7 +421,7 @@ fn inspect_candidate(tool: ToolId, candidate: &Candidate, php_runner: Option<&Pa
         } else {
             candidate.artifact.as_ref().map(|path| path.to_string_lossy().into_owned())
         },
-        version,
+        version: Some(version),
     })
 }
 
@@ -459,6 +465,19 @@ fn inspect_tool(tool: ToolId, discovery: &Discovery, php_count: usize, php_path:
                 if notes.len() < 8 && !notes.contains(&error) {
                     notes.push(error);
                 }
+                installations.push(Installation {
+                    executable_path: if tool == ToolId::Composer {
+                        php_path.map(|path| path.to_string_lossy().into_owned()).unwrap_or_default()
+                    } else {
+                        candidate.executable.to_string_lossy().into_owned()
+                    },
+                    artifact_path: if tool == ToolId::Composer {
+                        Some(candidate.artifact.as_ref().unwrap_or(&candidate.executable).to_string_lossy().into_owned())
+                    } else {
+                        None
+                    },
+                    version: None,
+                });
             }
         }
     }
@@ -466,7 +485,7 @@ fn inspect_tool(tool: ToolId, discovery: &Discovery, php_count: usize, php_path:
     installations.sort_by(|left, right| left.executable_path.cmp(&right.executable_path));
     let status = if candidates.len() > 1 {
         "ambiguous"
-    } else if installations.len() == 1 {
+    } else if installations.len() == 1 && installations[0].version.is_some() {
         "detected"
     } else {
         "inspectionError"
@@ -537,5 +556,30 @@ mod tests {
         let bytes = vec![b'x'; MAX_OUTPUT_BYTES + 1024];
         let retained = read_capped(bytes.as_slice());
         assert_eq!(retained.len(), MAX_OUTPUT_BYTES);
+    }
+
+    #[test]
+    fn missing_executable_is_reported_as_a_process_start_error() {
+        let missing = Path::new("definitely-not-a-real-dem-tool.exe");
+        assert!(run_bounded(missing, &[]).is_err());
+    }
+
+    #[test]
+    fn discovery_deduplicates_canonical_candidate_paths() {
+        let directory = std::env::temp_dir().join(format!(
+            "dem-m2-candidate-test-{}",
+            std::process::id()
+        ));
+        fs::create_dir_all(&directory).expect("create test directory");
+        let executable = directory.join("node.exe");
+        fs::write(&executable, b"test fixture").expect("create fixture");
+
+        let mut discovery = Discovery::default();
+        discovery.add(ToolId::Node, executable.clone(), None);
+        discovery.add(ToolId::Node, executable.clone(), None);
+
+        assert_eq!(discovery.candidates.get(&ToolId::Node).map(Vec::len), Some(1));
+        let _ = fs::remove_file(executable);
+        let _ = fs::remove_dir(directory);
     }
 }
