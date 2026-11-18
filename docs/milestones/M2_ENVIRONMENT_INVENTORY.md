@@ -1,7 +1,8 @@
 # M2 — Environment Inventory & Runtime Detection
 
 **Development:** In Progress | **Test Preparation:** Ready | **Acceptance:** Pending  
-**Issue:** [#5 — Environment Inventory & Runtime Detection](https://github.com/imandodo01/devenv-manager/issues/5)  
+**Issue:** [#11 — Implement read-only environment inventory](https://github.com/imandodo01/devenv-manager/issues/11)  
+**Planning decision:** [PR #5 — approved support matrix and detection policy](https://github.com/imandodo01/devenv-manager/pull/5)
 **Dependency:** M0 and M1 accepted
 
 ## Goal
